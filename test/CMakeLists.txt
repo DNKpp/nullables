@@ -7,6 +7,9 @@ set(TARGET_NAME nullables-tests)
 
 add_executable(${TARGET_NAME}
     "nullables.cpp"
+
+    "Common.cpp"
+    "Algorithm.cpp"
 )
 
 target_include_directories(${TARGET_NAME}
