@@ -23,4 +23,7 @@ template <typename T>
 struct gimo::traits<std::optional<T>>
 {
     static constexpr auto null{std::nullopt};
+
+    template <typename V>
+    using rebind_value =  std::optional<V>;
 };

@@ -9,6 +9,7 @@ add_executable(${TARGET_NAME}
     "Common.cpp"
     "AndThenAlgorithm.cpp"
     "OrElseAlgorithm.cpp"
+    "TransformAlgorithm.cpp"
 )
 
 add_subdirectory(config)
