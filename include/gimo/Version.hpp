@@ -8,6 +8,8 @@
 
 #pragma once
 
-#define GIMO_VERSION 1
+#define GIMO_VERSION_MAJOR 0
+#define GIMO_VERSION_MINOR 1
+#define GIMO_VERSION_PATCH 0
 
 #endif

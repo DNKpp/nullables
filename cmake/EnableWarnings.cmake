@@ -3,10 +3,10 @@
 #    (See accompanying file LICENSE_1_0.txt or copy at
 #          https://www.boost.org/LICENSE_1_0.txt)
 
-if (NOT TARGET nullables-internal-enable-warnings)
+if (NOT TARGET gimo-internal-enable-warnings)
 
-	add_library(nullables-internal-enable-warnings INTERFACE)
-	add_library(nullables::internal::enable-warnings ALIAS nullables-internal-enable-warnings)
+	add_library(gimo-internal-enable-warnings INTERFACE)
+	add_library(gimo::internal::enable-warnings ALIAS gimo-internal-enable-warnings)
 
 	# We need to circumvent the huge nonsense warnings from clang-cl
 	# see: https://discourse.cmake.org/t/wall-with-visual-studio-clang-toolchain-results-in-way-too-many-warnings/7927
@@ -22,8 +22,7 @@ if (NOT TARGET nullables-internal-enable-warnings)
 		)
 	endif()
 
-	target_compile_options(nullables-internal-enable-warnings
-		INTERFACE
+	target_compile_options(gimo-internal-enable-warnings INTERFACE
 		${WARNING_FLAGS}
 	)
 

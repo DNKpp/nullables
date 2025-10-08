@@ -8,18 +8,17 @@ set(MESSAGE_PREFIX "gimo:")
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-include(ReadNullablesVersion)
-read_nullables_version("include/gimo/Version.hpp" GIMO_VERSION)
+include(GimoReadVersion)
+gimo_read_version("include/gimo/Version.hpp" GIMO_VERSION)
 
-project(
-	nullables
+project(gimo
 	LANGUAGES		CXX
     VERSION ${GIMO_VERSION}
 	DESCRIPTION		"TBD"
 	HOMEPAGE_URL	"https://github.com/DNKpp/nullables"
 )
 
-message(STATUS "${MESSAGE_PREFIX} version: v${PROJECT_VERSION} from: ${nullables_SOURCE_DIR}")
+message(STATUS "${MESSAGE_PREFIX} version: v${PROJECT_VERSION} from: ${gimo_SOURCE_DIR}")
 
 include(GNUInstallDirs)
 

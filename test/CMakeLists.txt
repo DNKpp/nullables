@@ -23,8 +23,8 @@ include(EnableWarnings)
 find_package(Catch2 REQUIRED)
 find_package(mimic++ REQUIRED)
 target_link_libraries(${TARGET_NAME} PRIVATE
-    nullables::nullables
-    nullables::internal::enable-warnings
+    gimo::gimo
+    gimo::internal::enable-warnings
 
     Catch2::Catch2WithMain
     mimicpp::mimicpp
