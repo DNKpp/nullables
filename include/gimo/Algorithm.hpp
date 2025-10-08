@@ -10,6 +10,10 @@
 
 #include "gimo/Common.hpp"
 
+#include <concepts>
+#include <functional>
+#include <utility>
+
 namespace gimo::detail
 {
     template <typename T>
@@ -28,10 +32,10 @@ namespace gimo::detail
         {
             if (detail::has_value(opt))
             {
-                return Derived::execute(self(), has_value_tag{}, std::forward<Nullable>(), steps...);
+                return Derived::execute(self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
             }
 
-            return Derived::execute(self(), is_empty_tag{}, std::forward<Nullable>(), steps...);
+            return Derived::execute(self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived const&> Nullable>
@@ -40,10 +44,10 @@ namespace gimo::detail
         {
             if (detail::has_value(opt))
             {
-                return Derived::execute(self(), has_value_tag{}, std::forward<Nullable>(), steps...);
+                return Derived::execute(self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
             }
 
-            return Derived::execute(self(), is_empty_tag{}, std::forward<Nullable>(), steps...);
+            return Derived::execute(self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived&&> Nullable>
@@ -52,10 +56,10 @@ namespace gimo::detail
         {
             if (detail::has_value(opt))
             {
-                return Derived::execute(std::move(*this).self(), has_value_tag{}, std::forward<Nullable>(), steps...);
+                return Derived::execute(std::move(*this).self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
             }
 
-            return Derived::execute(std::move(*this).self(), is_empty_tag{}, std::forward<Nullable>(), steps...);
+            return Derived::execute(std::move(*this).self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived const&&> Nullable>
@@ -64,10 +68,10 @@ namespace gimo::detail
         {
             if (detail::has_value(opt))
             {
-                return Derived::execute(std::move(*this).self(), has_value_tag{}, std::forward<Nullable>(), steps...);
+                return Derived::execute(std::move(*this).self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
             }
 
-            return Derived::execute(std::move(*this).self(), is_empty_tag{}, std::forward<Nullable>(), steps...);
+            return Derived::execute(std::move(*this).self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived&> Nullable>
@@ -165,7 +169,7 @@ namespace gimo::detail
     private:
         static consteval void check() noexcept
         {
-            static_assert(std::derived_from<Derived, ComposableAlgorithmBase>, "Derived must inherit from ComposableAlgorithmBase");
+            static_assert(std::is_base_of_v<ComposableAlgorithmBase, Derived>, "Derived must inherit from ComposableAlgorithmBase");
         }
 
         [[nodiscard]]
@@ -213,6 +217,8 @@ namespace gimo
         {
         }
 
+        using detail::ComposableAlgorithmBase<AndThenAlgorithm>::operator();
+
     private:
         Action m_Action;
 
@@ -220,16 +226,42 @@ namespace gimo
         [[nodiscard]]
         static constexpr auto execute(
             Self&& self,
-            [[maybe_unused]] detail::has_value_tag const,
+            detail::has_value_tag const tag,
             Nullable&& opt,
             auto& first,
             auto&... steps)
         {
             return std::invoke(
                 first,
-                std::invoke(
-                    std::forward<Self>(self).action,
-                    value(std::forward<Nullable>(opt))),
+                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
+                steps...);
+        }
+
+        template <typename Self, nullable Nullable>
+        [[nodiscard]]
+        static constexpr auto execute(
+            Self&& self,
+            [[maybe_unused]] detail::has_value_tag const,
+            Nullable&& opt)
+        {
+            return std::invoke(
+                std::forward<Self>(self).m_Action,
+                value(std::forward<Nullable>(opt)));
+        }
+
+        template <typename Self, nullable Nullable>
+        [[nodiscard]]
+        static constexpr auto execute(
+            Self&& self,
+            detail::is_empty_tag const tag,
+            Nullable&& opt,
+            auto& first,
+            auto&... steps)
+        {
+            return std::invoke(
+                first,
+                tag,
+                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
                 steps...);
         }
 
@@ -237,32 +269,29 @@ namespace gimo
         [[nodiscard]]
         static constexpr auto execute(
             [[maybe_unused]] Self&& self,
-            detail::is_empty_tag const tag,
-            [[maybe_unused]] Nullable&& opt,
-            auto& first,
-            auto&... steps)
+            [[maybe_unused]] detail::is_empty_tag const tag,
+            [[maybe_unused]] Nullable&& opt)
         {
             using Result = std::invoke_result_t<Action, Nullable&&>;
 
-            return std::invoke(
-                first,
-                tag,
-                detail::construct_empty<Result>(),
-                steps...);
+            return detail::construct_empty<Result>();
         }
     };
 
     template <typename Action>
     struct detail::is_applicable<AndThenAlgorithm<Action>>
-    {
+    { /*
+         template <typename Self, nullable Nullable>
+             requires std::same_as<AndThenAlgorithm<Action>, std::remove_cvref_t<Self>>
+         static constexpr bool value = requires {
+             requires nullable<
+                 std::invoke_result_t<
+                     cv_ref_like_t<Self, Action>,
+                     reference_type_t<Nullable>>>;
+         };*/
+
         template <typename Self, nullable Nullable>
-            requires std::same_as<AndThenAlgorithm<Action>, std::remove_cvref_t<Self>>
-        static constexpr bool value = requires {
-            requires nullable<
-                std::invoke_result_t<
-                    cv_ref_like_t<Self, Action>,
-                    reference_type_t<Nullable>>>;
-        };
+        static constexpr bool value{true};
     };
 
     template <typename Action>
@@ -277,6 +306,8 @@ namespace gimo
             : m_Action{std::move(action)}
         {
         }
+
+        using detail::ComposableAlgorithmBase<OrElseAlgorithm>::operator();
 
     private:
         Action m_Action;
@@ -337,6 +368,8 @@ namespace gimo
             : m_Action{std::move(action)}
         {
         }
+
+        using detail::ComposableAlgorithmBase<TransformAlgorithm>::operator();
 
     private:
         Action m_Action;
