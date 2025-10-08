@@ -326,18 +326,37 @@ namespace gimo
         }
 
         template <typename Self, nullable Nullable>
+        static constexpr auto execute(
+            [[maybe_unused]] Self&& self,
+            [[maybe_unused]] detail::has_value_tag const tag,
+            Nullable&& opt)
+        {
+            return std::forward<Nullable>(opt);
+        }
+
+        template <typename Self, nullable Nullable>
         [[nodiscard]]
         static constexpr auto execute(
             Self&& self,
-            [[maybe_unused]] detail::is_empty_tag const,
-            [[maybe_unused]] Nullable&& opt,
+            detail::is_empty_tag const tag,
+            Nullable&& opt,
             auto& first,
             auto&... steps)
         {
             return std::invoke(
                 first,
-                std::invoke(std::forward<Self>(self).action),
+                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
                 steps...);
+        }
+
+        template <typename Self, nullable Nullable>
+        [[nodiscard]]
+        static constexpr auto execute(
+            Self&& self,
+            [[maybe_unused]] detail::is_empty_tag const tag,
+            [[maybe_unused]] Nullable&& opt)
+        {
+            return std::invoke(std::forward<Self>(self).m_Action);
         }
     };
 
