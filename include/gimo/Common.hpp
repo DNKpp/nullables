@@ -120,7 +120,7 @@ namespace gimo
         [[nodiscard]]
         constexpr bool has_value(Nullable const& target)
         {
-            return target == null_v<Nullable>;
+            return target != null_v<Nullable>;
         }
 
         template <typename Nullable, typename Value>
