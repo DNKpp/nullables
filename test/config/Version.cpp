@@ -3,7 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          https://www.boost.org/LICENSE_1_0.txt)
 
-#include "nullables/nullables.hpp"
+#include "gimo/Version.hpp"
 
 TEST_CASE("NULLABLES_VERSION is an integral number.")
 {
