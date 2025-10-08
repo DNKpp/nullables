@@ -13,6 +13,7 @@
 #include <concepts>
 #include <functional>
 #include <utility>
+#include <type_traits>
 
 namespace gimo::detail
 {
@@ -76,88 +77,88 @@ namespace gimo::detail
 
         template <applicable_on<Derived&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const, Nullable&& opt, auto&... steps) &
+        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) &
         {
             return Derived::execute(
                 self(),
-                has_value_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived const&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const, Nullable&& opt, auto&... steps) const&
+        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) const&
         {
             return Derived::execute(
                 self(),
-                has_value_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const, Nullable&& opt, auto&... steps) &&
+        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) &&
         {
             return Derived::execute(
                 std::move(*this).self(),
-                has_value_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived const&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const, Nullable&& opt, auto&... steps) const&&
+        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) const&&
         {
             return Derived::execute(
                 std::move(*this).self(),
-                has_value_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const, Nullable&& opt, auto&... steps) &
+        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) &
         {
             return Derived::execute(
                 self(),
-                is_empty_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived const&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const, Nullable&& opt, auto&... steps) const&
+        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) const&
         {
             return Derived::execute(
                 self(),
-                is_empty_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const, Nullable&& opt, auto&... steps) &&
+        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) &&
         {
             return Derived::execute(
                 std::move(*this).self(),
-                is_empty_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived const&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const, Nullable&& opt, auto&... steps) const&&
+        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) const&&
         {
             return Derived::execute(
                 std::move(*this).self(),
-                is_empty_tag{},
+                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
