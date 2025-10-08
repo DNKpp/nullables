@@ -93,6 +93,18 @@ namespace gimo
                     && std::assignable_from<Nullable&, Null>;
 
     template <typename T>
+    concept dereferencable = requires(T closure)
+    {
+        {*std::forward<T>(closure)} -> detail::referencable;
+    };
+
+    template <dereferencable T>
+    constexpr decltype(auto) value(T&& nullable)
+    {
+        return *std::forward<T>(nullable);
+    }
+
+    template <typename T>
     concept nullable = requires(T&& obj) {
         requires null_for<decltype(null_v<T>), T>;
         { value(std::forward<T>(obj)) } -> detail::referencable;
