@@ -106,7 +106,7 @@ namespace gimo
 
     template <typename T>
     concept nullable = requires(T&& obj) {
-        requires null_for<decltype(null_v<T>), T>;
+        requires null_for<decltype(null_v<T>), std::remove_cvref_t<T>>;
         { value(std::forward<T>(obj)) } -> detail::referencable;
     };
 
