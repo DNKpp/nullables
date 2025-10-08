@@ -7,7 +7,8 @@ set(TARGET_NAME gimo-tests)
 
 add_executable(${TARGET_NAME}
     "Common.cpp"
-    "Algorithm.cpp"
+    "AndThenAlgorithm.cpp"
+    "OrElseAlgorithm.cpp"
 )
 
 add_subdirectory(config)
@@ -31,9 +32,7 @@ target_link_libraries(${TARGET_NAME} PRIVATE
 )
 
 target_precompile_headers(${TARGET_NAME} PRIVATE
-    <catch2/catch_all.hpp>
-    <mimic++/mimic++.hpp>
-    <mimic++_ext/adapters/Catch2.hpp>
+    "pch.hpp"
 )
 
 catch_discover_tests(${TARGET_NAME})
