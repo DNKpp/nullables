@@ -82,10 +82,7 @@ namespace gimo
     inline constexpr auto null_v{traits<std::remove_cvref_t<Nullable>>::null};
 
     template <typename Nullable, typename Value>
-    using rebind_value_t = typename traits<Nullable>::template rebind_value<Value>;
-
-    template <typename Nullable>
-    using reference_type_t = decltype(value(std::declval<Nullable&&>()));
+    using rebind_value_t = typename traits<std::remove_cvref_t<Nullable>>::template rebind_value<Value>;
 
     template <typename Null, typename Nullable>
     concept null_for = detail::weakly_equality_comparable_with<Null, Nullable>
@@ -103,6 +100,9 @@ namespace gimo
     {
         return *std::forward<T>(nullable);
     }
+
+    template <typename Nullable>
+    using reference_type_t = decltype(value(std::declval<Nullable&&>()));
 
     template <typename T>
     concept nullable = requires(T&& obj) {

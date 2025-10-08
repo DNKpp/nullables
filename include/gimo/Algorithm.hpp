@@ -402,10 +402,36 @@ namespace gimo
             return std::invoke(
                 first,
                 tag,
-                detail::rebind_value<Nullable>(
-                    std::invoke(
-                        std::forward<Self>(self).action,
-                        value(std::forward<Nullable>(opt)))),
+                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
+                steps...);
+        }
+
+        template <typename Self, nullable Nullable>
+        [[nodiscard]]
+        static constexpr auto execute(
+            Self&& self,
+            [[maybe_unused]] detail::has_value_tag const tag,
+            Nullable&& opt)
+        {
+            return detail::rebind_value<Nullable>(
+                std::invoke(
+                    std::forward<Self>(self).m_Action,
+                    value(std::forward<Nullable>(opt))));
+        }
+
+        template <typename Self, nullable Nullable>
+        [[nodiscard]]
+        static constexpr auto execute(
+            Self&& self,
+            detail::is_empty_tag const tag,
+            Nullable&& opt,
+            auto& first,
+            auto&... steps)
+        {
+            return std::invoke(
+                first,
+                tag,
+                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
                 steps...);
         }
 
@@ -413,18 +439,12 @@ namespace gimo
         [[nodiscard]]
         static constexpr auto execute(
             [[maybe_unused]] Self&& self,
-            detail::is_empty_tag const tag,
-            [[maybe_unused]] Nullable&& opt,
-            auto& first,
-            auto&... steps)
+            [[maybe_unused]] detail::is_empty_tag const tag,
+            [[maybe_unused]] Nullable&& opt)
         {
-            using Result = std::invoke_result_t<Action, decltype(value(std::forward<Nullable>()))>;
+            using Result = std::invoke_result_t<Action, decltype(value(std::forward<Nullable>(opt)))>;
 
-            return std::invoke(
-                first,
-                tag,
-                detail::construct_empty<rebind_value_t<Nullable, Result>>(),
-                steps...);
+            return detail::construct_empty<rebind_value_t<Nullable, Result>>();
         }
     };
 
