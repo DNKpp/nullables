@@ -280,18 +280,15 @@ namespace gimo
 
     template <typename Action>
     struct detail::is_applicable<AndThenAlgorithm<Action>>
-    { /*
-         template <typename Self, nullable Nullable>
-             requires std::same_as<AndThenAlgorithm<Action>, std::remove_cvref_t<Self>>
-         static constexpr bool value = requires {
-             requires nullable<
-                 std::invoke_result_t<
-                     cv_ref_like_t<Self, Action>,
-                     reference_type_t<Nullable>>>;
-         };*/
-
+    {
         template <typename Self, nullable Nullable>
-        static constexpr bool value{true};
+            requires std::same_as<AndThenAlgorithm<Action>, std::remove_cvref_t<Self>>
+        static constexpr bool value = requires {
+            requires nullable<
+                std::invoke_result_t<
+                    cv_ref_like_t<Self, Action>,
+                    Nullable>>;
+        };
     };
 
     template <typename Action>
