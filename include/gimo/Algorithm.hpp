@@ -31,48 +31,28 @@ namespace gimo::detail
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, auto&... steps) &
         {
-            if (detail::has_value(opt))
-            {
-                return Derived::execute(self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
-            }
-
-            return Derived::execute(self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
+            return test_and_execute(self(), std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived const&> Nullable>
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, auto&... steps) const&
         {
-            if (detail::has_value(opt))
-            {
-                return Derived::execute(self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
-            }
-
-            return Derived::execute(self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
+            return test_and_execute(self(), std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived&&> Nullable>
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, auto&... steps) &&
         {
-            if (detail::has_value(opt))
-            {
-                return Derived::execute(std::move(*this).self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
-            }
-
-            return Derived::execute(std::move(*this).self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
+            return test_and_execute(std::move(*this).self(), std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived const&&> Nullable>
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, auto&... steps) const&&
         {
-            if (detail::has_value(opt))
-            {
-                return Derived::execute(std::move(*this).self(), has_value_tag{}, std::forward<Nullable>(opt), steps...);
-            }
-
-            return Derived::execute(std::move(*this).self(), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
+            return test_and_execute(std::move(*this).self(), std::forward<Nullable>(opt), steps...);
         }
 
         template <applicable_on<Derived&> Nullable>
@@ -199,6 +179,18 @@ namespace gimo::detail
         {
             check();
             return static_cast<Derived const&&>(*this);
+        }
+
+        template <typename Self, typename Nullable>
+        [[nodiscard]]
+        static constexpr auto test_and_execute(Self&& self, Nullable&& opt, auto&... steps)
+        {
+            if (detail::has_value(opt))
+            {
+                return Derived::execute(std::forward<Self>(self), has_value_tag{}, std::forward<Nullable>(opt), steps...);
+            }
+
+            return Derived::execute(std::forward<Self>(self), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
         }
     };
 }
