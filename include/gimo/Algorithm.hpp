@@ -265,7 +265,7 @@ namespace gimo
             [[maybe_unused]] detail::is_empty_tag const tag,
             [[maybe_unused]] Nullable&& opt)
         {
-            using Result = std::invoke_result_t<Action, Nullable&&>;
+            using Result = std::invoke_result_t<Action, reference_type_t<Nullable>>;
 
             return detail::construct_empty<Result>();
         }
@@ -280,7 +280,7 @@ namespace gimo
             requires nullable<
                 std::invoke_result_t<
                     cv_ref_like_t<Self, Action>,
-                    Nullable>>;
+                    reference_type_t<Nullable>>>;
         };
     };
 

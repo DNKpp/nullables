@@ -40,31 +40,6 @@ struct value_or_algorithm
 
     Alternative alternative;
 };*/
-
-    template <typename... Steps>
-    struct pipeline
-    {
-        template <typename Step>
-        constexpr auto append(Step&& step) const
-        {
-            return pipeline<Steps..., std::remove_cvref_t<Step>>{
-                std::tuple_cat(steps, std::make_tuple(std::forward<Step>(step)))};
-        }
-
-        template <typename Nullable>
-        constexpr auto apply(Nullable&& opt) const
-        {
-            return std::apply(
-                [&](auto& first, auto&... steps) {
-                    return std::invoke(
-                        first,
-                        std::forward<Nullable>(opt),
-                        steps...);
-                });
-        }
-
-        std::tuple<Steps...> steps{};
-    };
 }
 
 TEST_CASE(
@@ -72,10 +47,10 @@ TEST_CASE(
     "[algorithm]")
 {
     mimicpp::Mock<
-        std::optional<int>(std::optional<float>)&,
-        std::optional<int>(std::optional<float>) const&,
-        std::optional<int>(std::optional<float>)&&,
-        std::optional<int>(std::optional<float>) const&&>
+        std::optional<int>(float)&,
+        std::optional<int>(float) const&,
+        std::optional<int>(float)&&,
+        std::optional<int>(float) const&&>
         action{};
 
     using Algorithm = gimo::AndThenAlgorithm<decltype(action)>;
@@ -160,5 +135,65 @@ TEST_CASE(
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(!result);
         }
+    }
+}
+
+TEST_CASE(
+    "AndThenAlgorithm receives the nullable forwarded.",
+    "[algorithm]")
+{
+    mimicpp::Mock<
+        std::optional<int>(float&) const,
+        std::optional<int>(float const&) const,
+        std::optional<int>(float&&) const,
+        std::optional<int>(float const&&) const>
+        action{};
+    gimo::AndThenAlgorithm const andThen{std::cref(action)};
+
+    using Algorithm = std::remove_const_t<decltype(andThen)>;
+    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&&>);
+
+    std::optional opt{1337.f};
+    SECTION("When argument is provided as lvalue-ref.")
+    {
+        SCOPED_EXP action.expect_call(matches::type<float&>)
+            and expect::arg<0>(matches::eq(1337.f))
+            and finally::returns(std::optional{42});
+        decltype(auto) result = andThen(opt);
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(42 == result);
+    }
+
+    SECTION("When argument is provided as const lvalue-ref.")
+    {
+        SCOPED_EXP action.expect_call(matches::type<float const&>)
+            and expect::arg<0>(matches::eq(1337.f))
+            and finally::returns(std::optional{42});
+        decltype(auto) result = andThen(std::as_const(opt));
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(42 == result);
+    }
+
+    SECTION("When argument is provided as rvalue-ref.")
+    {
+        SCOPED_EXP action.expect_call(matches::type<float&&>)
+            and expect::arg<0>(matches::eq(1337.f))
+            and finally::returns(std::optional{42});
+        decltype(auto) result = andThen(std::move(opt));
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(42 == result);
+    }
+
+    SECTION("When argument is provided as const rvalue-ref.")
+    {
+        SCOPED_EXP action.expect_call(matches::type<float const&&>)
+            and expect::arg<0>(matches::eq(1337.f))
+            and finally::returns(std::optional{42});
+        decltype(auto) result = andThen(std::move(std::as_const(opt)));
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(42 == result);
     }
 }

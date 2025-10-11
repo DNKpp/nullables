@@ -12,6 +12,7 @@
 namespace finally = mimicpp::finally;
 namespace then = mimicpp::then;
 namespace expect = mimicpp::expect;
+namespace matches = mimicpp::matches;
 
 namespace gimo
 {
