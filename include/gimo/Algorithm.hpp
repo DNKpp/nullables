@@ -9,11 +9,12 @@
 #pragma once
 
 #include "gimo/Common.hpp"
+#include "gimo/Pipeline.hpp"
 
 #include <concepts>
 #include <functional>
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 namespace gimo::detail
 {
@@ -270,6 +271,14 @@ namespace gimo
             return detail::construct_empty<Result>();
         }
     };
+
+    template <typename Action>
+    [[nodiscard]]
+    constexpr auto and_then(Action&& action)
+    {
+        return Pipeline{
+            std::make_tuple(AndThenAlgorithm{std::forward<Action>(action)})};
+    }
 
     template <typename Action>
     struct detail::is_applicable<AndThenAlgorithm<Action>>

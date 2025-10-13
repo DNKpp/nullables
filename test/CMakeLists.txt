@@ -10,6 +10,7 @@ add_executable(${TARGET_NAME}
     "AndThenAlgorithm.cpp"
     "OrElseAlgorithm.cpp"
     "TransformAlgorithm.cpp"
+    "Pipeline.cpp"
 )
 
 add_subdirectory(config)
