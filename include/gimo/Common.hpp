@@ -84,15 +84,39 @@ namespace gimo
     template <typename Nullable, typename Value>
     using rebind_value_t = typename traits<std::remove_cvref_t<Nullable>>::template rebind_value<Value>;
 
+    namespace detail
+    {
+        template <typename T, typename U, typename C = std::common_reference_t<T const&, U const&>>
+        concept regular_relationship_impl =
+            std::same_as<
+                std::common_reference_t<T const&, U const&>,
+                std::common_reference_t<U const&, T const&>>
+            && (std::convertible_to<T const&, C const&>
+                || std::convertible_to<T, C const&>)
+            && (std::convertible_to<U const&, C const&>
+                || std::convertible_to<U, C const&>);
+
+        template <typename Lhs, typename Rhs>
+        concept weakly_assignable_from =
+            std::is_lvalue_reference_v<Lhs>
+            && requires(Lhs lhs, Rhs&& rhs) {
+                   { lhs = std::forward<Rhs>(rhs) } -> std::same_as<Lhs>;
+               };
+    }
+
+    template <typename T, typename U>
+    concept regular_relationship =
+        detail::regular_relationship_impl<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
+
     template <typename Null, typename Nullable>
-    concept null_for = detail::weakly_equality_comparable_with<Null, Nullable>
-                    && std::constructible_from<Nullable, Null>
-                    && std::assignable_from<Nullable&, Null>;
+    concept null_for = regular_relationship<Nullable, Null>
+                    && detail::weakly_equality_comparable_with<Null, Nullable>
+                    && std::constructible_from<Nullable, Null const&>
+                    && detail::weakly_assignable_from<Nullable&, Null const&>;
 
     template <typename T>
-    concept dereferencable = requires(T closure)
-    {
-        {*std::forward<T>(closure)} -> detail::referencable;
+    concept dereferencable = requires(T closure) {
+        { *std::forward<T>(closure) } -> detail::referencable;
     };
 
     template <dereferencable T>
@@ -106,6 +130,7 @@ namespace gimo
 
     template <typename T>
     concept nullable = requires(T&& obj) {
+        requires std::destructible<traits<std::remove_cvref_t<T>>>;
         requires null_for<decltype(null_v<T>), std::remove_cvref_t<T>>;
         { value(std::forward<T>(obj)) } -> detail::referencable;
     };
