@@ -6,6 +6,8 @@
 #ifndef GIMO_EXT_STD_OPTIONAL_HPP
 #define GIMO_EXT_STD_OPTIONAL_HPP
 
+#pragma once
+
 #include "gimo/Common.hpp"
 
 #include <optional>

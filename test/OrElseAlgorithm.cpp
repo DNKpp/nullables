@@ -3,6 +3,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          https://www.boost.org/LICENSE_1_0.txt)
 
+#include "gimo_ext/std_optional.hpp"
 #include "gimo/Algorithm.hpp"
 
 TEST_CASE(
@@ -17,6 +18,8 @@ TEST_CASE(
         action{};
 
     using Algorithm = gimo::OrElseAlgorithm<decltype(action)>;
+    static_assert(gimo::nullable<std::optional<int>>);
+    static_assert(std::destructible<gimo::traits<std::optional<int>>>);
     STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm&>);
     STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm const&>);
     STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm&&>);

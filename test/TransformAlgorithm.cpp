@@ -4,6 +4,7 @@
 //          https://www.boost.org/LICENSE_1_0.txt)
 
 #include "gimo/Algorithm.hpp"
+#include "gimo_ext/std_optional.hpp"
 
 TEST_CASE(
     "TransformAlgorithm invokes its action with the contained value, when there is any."
