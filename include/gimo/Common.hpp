@@ -74,12 +74,6 @@ namespace gimo
     template <typename Nullable>
     struct traits;
 
-    template <typename Nullable>
-    inline constexpr auto null_v{traits<std::remove_cvref_t<Nullable>>::null};
-
-    template <typename Nullable, typename Value>
-    using rebind_value_t = typename traits<std::remove_cvref_t<Nullable>>::template rebind_value<Value>;
-
     namespace detail
     {
         template <typename T, typename U, typename C = std::common_reference_t<T const&, U const&>>
@@ -121,13 +115,9 @@ namespace gimo
         return *std::forward<T>(nullable);
     }
 
-    template <typename Nullable>
-    using reference_type_t = decltype(value(std::declval<Nullable&&>()));
-
     template <typename T>
     concept nullable = requires(T&& obj) {
-        requires std::destructible<traits<std::remove_cvref_t<T>>>;
-        requires null_for<decltype(null_v<T>), std::remove_cvref_t<T>>;
+        requires null_for<decltype(traits<std::remove_cvref_t<T>>::null), std::remove_cvref_t<T>>;
         { value(std::forward<T>(obj)) } -> detail::referencable;
     };
 
@@ -135,10 +125,18 @@ namespace gimo
     concept rebindable_to = nullable<Nullable>
                          && requires(T&& obj) {
                                 {
-                                    typename traits<Nullable>::template rebind_value<std::remove_cvref_t<T>>{
+                                    typename traits<std::remove_cvref_t<Nullable>>::template rebind_value<std::remove_cvref_t<T>>{
                                         std::forward<T>(obj)}
                                 } -> nullable;
                             };
+    template <nullable Nullable>
+    using reference_type_t = decltype(value(std::declval<Nullable&&>()));
+
+    template <nullable Nullable>
+    inline constexpr auto null_v{traits<std::remove_cvref_t<Nullable>>::null};
+
+    template <nullable Nullable, typename Value>
+    using rebind_value_t = typename traits<std::remove_cvref_t<Nullable>>::template rebind_value<Value>;
 
     namespace detail
     {
