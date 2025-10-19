@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include "gimo/Common.hpp"
+
 #include <functional>
 #include <tuple>
 #include <type_traits>

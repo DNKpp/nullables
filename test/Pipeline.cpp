@@ -5,8 +5,6 @@
 
 #include "gimo/Algorithm.hpp"
 
-#include <memory>
-
 namespace
 {
     struct NullableNull
@@ -86,18 +84,6 @@ struct gimo::traits<NullableMock<T>>
     static constexpr NullableNull null{};
 };
 
-void foo(std::common_reference_t<std::optional<int> const&, std::nullopt_t const&>) = delete;
-// void foo(std::common_reference_t<NullableMock<int> const&, NullableNull const&>) = delete;
-
-static_assert(std::same_as<std::optional<int> const, std::common_reference_t<std::optional<int> const&, std::nullopt_t const&>>);
-static_assert(std::same_as<std::optional<int>, decltype(false ? std::optional<int>{} : std::declval<std::nullopt_t>())>);
-static_assert(std::convertible_to<std::nullopt_t const&, std::optional<int> const&>);
-
-static_assert(std::same_as<std::optional<int>, decltype(false ? std::declval<std::nullopt_t>() : std::optional<int>{})>);
-
-// static_assert(std::same_as<NullableMock<int> const, std::common_reference_t<NullableMock<int> const&, NullableNull const&>>);
-
-static_assert(std::convertible_to<NullableNull const&, NullableMock<int> const&>);
 static_assert(gimo::nullable<NullableMock<int>>);
 
 TEST_CASE(
