@@ -5,20 +5,14 @@
 
 include(CTest)
 
-set(TARGET_NAME gimo-tests)
+set(TARGET_NAME gimo-benchmarks)
 
 add_executable(${TARGET_NAME}
-    "Common.cpp"
-    "AndThenAlgorithm.cpp"
-    "OrElseAlgorithm.cpp"
-    "TransformAlgorithm.cpp"
-    "Pipeline.cpp"
+    "main.cpp"
 )
 
-add_subdirectory(config)
-
-target_include_directories(${TARGET_NAME} PRIVATE
-    "$<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>"
+target_compile_features(${TARGET_NAME} INTERFACE
+    cxx_std_23
 )
 
 include(EnableSanitizers)
@@ -26,17 +20,15 @@ enable_sanitizers(${TARGET_NAME})
 
 include(EnableWarnings)
 find_package(Catch2 REQUIRED)
-find_package(mimic++ REQUIRED)
 target_link_libraries(${TARGET_NAME} PRIVATE
     gimo::gimo
     gimo::internal::enable-warnings
 
     Catch2::Catch2WithMain
-    mimicpp::mimicpp
 )
 
 target_precompile_headers(${TARGET_NAME} PRIVATE
-    "pch.hpp"
+    <catch2/catch_all.hpp>
 )
 
 catch_discover_tests(${TARGET_NAME})

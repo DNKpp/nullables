@@ -37,8 +37,12 @@ string(COMPARE EQUAL "${gimo_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" IS_TOP_LEVEL_PRO
 
 option(GIMO_BUILD_TESTS "Determines, whether the tests shall be built." ${IS_TOP_LEVEL_PROJECT})
 if (GIMO_BUILD_TESTS)
-	include(CTest)
 	add_subdirectory("test")
+endif()
+
+option(GIMO_BUILD_BENCHMARKS "Determines, whether the benchmarks shall be built." ${IS_TOP_LEVEL_PROJECT})
+if (GIMO_BUILD_BENCHMARKS)
+	add_subdirectory("benchmarks")
 endif()
 
 option(GIMO_CONFIGURE_DOXYGEN "Determines, whether the doxyfile shall be configured." OFF)
