@@ -85,6 +85,13 @@ TEMPLATE_TEST_CASE_SIG(
     (false, int&&),
     (false, int const&&),
 
+    (false, std::nullopt_t),
+    (false, std::nullopt_t const),
+    (false, std::nullopt_t&),
+    (false, std::nullopt_t const&),
+    (false, std::nullopt_t&&),
+    (false, std::nullopt_t const&&),
+
     (true, std::optional<int>),
     (true, std::optional<int> const),
     (true, std::optional<int>&),
