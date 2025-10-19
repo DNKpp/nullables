@@ -4,6 +4,7 @@
 //          https://www.boost.org/LICENSE_1_0.txt)
 
 #include "gimo/Common.hpp"
+#include "gimo_ext/std_optional.hpp"
 
 // see: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2445r1.pdf
 TEMPLATE_TEST_CASE_SIG(
@@ -71,4 +72,25 @@ TEMPLATE_TEST_CASE_SIG(
 {
     STATIC_CHECK(std::same_as<Expected, gimo::detail::const_ref_like_t<T, U>>);
     STATIC_CHECK(std::same_as<Expected, decltype(gimo::detail::forward_like<T>(std::declval<U>()))>);
+}
+
+TEMPLATE_TEST_CASE_SIG(
+    "nullable determines whether the specified type satisfies the requirements.",
+    "[concept]",
+    ((bool expected, typename T), expected, T),
+    (false, int),
+    (false, int const),
+    (false, int&),
+    (false, int const&),
+    (false, int&&),
+    (false, int const&&),
+
+    (true, std::optional<int>),
+    (true, std::optional<int> const),
+    (true, std::optional<int>&),
+    (true, std::optional<int> const&),
+    (true, std::optional<int>&&),
+    (true, std::optional<int> const&&))
+{
+    STATIC_CHECK(expected == gimo::nullable<T>);
 }
