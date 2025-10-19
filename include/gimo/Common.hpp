@@ -14,36 +14,32 @@
 namespace gimo::detail
 {
     template <typename T, typename U>
+    struct const_ref_like
+    {
+        using type = std::conditional_t<
+            std::is_const_v<std::remove_reference_t<T>>,
+            std::remove_reference_t<U> const&&,
+            std::remove_reference_t<U>&&>;
+    };
+
+    template <typename T, typename U>
+    struct const_ref_like<T&, U>
+    {
+        using type = std::conditional_t<
+            std::is_const_v<std::remove_reference_t<T>>,
+            std::remove_reference_t<U> const&,
+            std::remove_reference_t<U>&>;
+    };
+
+    template <typename T, typename U>
+    using const_ref_like_t = const_ref_like<T, U>::type;
+
+    template <typename T, typename U>
     [[nodiscard]]
     constexpr auto&& forward_like(U&& x) noexcept
     {
-        constexpr bool is_adding_const = std::is_const_v<std::remove_reference_t<T>>;
-        if constexpr (std::is_lvalue_reference_v<T&&>)
-        {
-            if constexpr (is_adding_const)
-            {
-                return std::as_const(x);
-            }
-            else
-            {
-                return static_cast<U&>(x);
-            }
-        }
-        else
-        {
-            if constexpr (is_adding_const)
-            {
-                return std::move(std::as_const(x));
-            }
-            else
-            {
-                return std::move(x); // NOLINT(*-move-forwarding-reference)
-            }
-        }
+        return static_cast<const_ref_like_t<T, U>>(x);
     }
-
-    template <typename T, typename U>
-    using cv_ref_like_t = decltype(forward_like<T>(std::declval<U>()));
 
     template <typename T>
     concept referencable = std::is_reference_v<T&>;

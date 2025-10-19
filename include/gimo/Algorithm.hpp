@@ -22,7 +22,7 @@ namespace gimo::detail
     struct is_applicable;
 
     template <typename Nullable, typename Algorithm>
-    concept applicable_on = is_applicable<std::remove_cvref_t<Algorithm>>::template value<Algorithm, Nullable>;
+    concept applicable_on = is_applicable<std::remove_cvref_t<Algorithm>>::template value<Algorithm&&, Nullable&&>;
 
     template <typename Derived>
     class ComposableAlgorithmBase
@@ -288,7 +288,7 @@ namespace gimo
         static constexpr bool value = requires {
             requires nullable<
                 std::invoke_result_t<
-                    cv_ref_like_t<Self, Action>,
+                    const_ref_like_t<Self, Action>,
                     reference_type_t<Nullable>>>;
         };
     };
@@ -370,7 +370,7 @@ namespace gimo
         static constexpr bool value = requires {
             requires std::same_as<
                 std::remove_cvref_t<Nullable>,
-                std::remove_cvref_t<std::invoke_result_t<cv_ref_like_t<Self, Action>>>>;
+                std::remove_cvref_t<std::invoke_result_t<const_ref_like_t<Self, Action>>>>;
         };
     };
 
@@ -458,7 +458,7 @@ namespace gimo
         static constexpr bool value = requires {
             requires rebindable_to<
                 std::invoke_result_t<
-                    cv_ref_like_t<Self, Action>,
+                    const_ref_like_t<Self, Action>,
                     reference_type_t<Nullable>>,
                 std::remove_cvref_t<Nullable>>;
         };
