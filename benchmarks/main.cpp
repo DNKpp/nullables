@@ -7,41 +7,26 @@
 #include "gimo/Pipeline.hpp"
 #include "gimo_ext/std_optional.hpp"
 
-#include <random>
-#include <ranges>
 
 TEST_CASE("benchmark")
 {
-    std::vector<std::optional<int>> optionals(100'000, std::nullopt);
-    std::ranges::transform(
-        std::views::iota(0, static_cast<int>(optionals.size() / 2u)),
-        optionals.begin(),
-        [](int const i) { return std::optional{i}; });
-    std::ranges::shuffle(optionals, std::mt19937{Catch::getSeed()});
+    std::optional<int> opt =
+        Catch::rngSeed() % 2 == 0 ? std::nullopt : std::optional<int>{1337};
 
     BENCHMARK("Member")
     {
-        return std::ranges::max(
-            optionals,
-            {},
-            [](auto const& opt) {
-                return opt.and_then([](auto const& x) { return std::optional{std::to_string(x)}; })
-                    .and_then([](std::string const& str) { return std::optional{str.size()}; })
-                    .and_then([](std::size_t const length) { return std::optional{static_cast<float>(length)}; })
-                    .value_or(0u);
-            });
+        return opt.and_then([](auto const& x) { return std::optional{x * x}; })
+            .and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
+            .and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; });
     };
 
     BENCHMARK("gimo")
     {
         static constexpr auto pipeline =
-            gimo::and_then([](auto const& x) { return std::optional{std::to_string(x)}; })
-            | gimo::and_then([](std::string const& str) { return std::optional{str.size()}; })
-            | gimo::and_then([](std::size_t const length) { return std::optional{static_cast<float>(length)}; });
+            gimo::and_then([](auto const& x) { return std::optional{x * x}; })
+            | gimo::and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
+            | gimo::and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; });
 
-        return std::ranges::max(
-            optionals,
-            {},
-            [](auto const& opt) { return pipeline.apply(opt).value_or(0u); });
+        return pipeline.apply(opt);
     };
 }

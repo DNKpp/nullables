@@ -11,7 +11,7 @@ add_executable(${TARGET_NAME}
     "main.cpp"
 )
 
-target_compile_features(${TARGET_NAME} INTERFACE
+target_compile_features(${TARGET_NAME} PRIVATE
     cxx_std_23
 )
 
