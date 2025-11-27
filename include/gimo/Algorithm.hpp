@@ -58,44 +58,40 @@ namespace gimo::detail
 
         template <applicable_on<Derived&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) &
+        constexpr auto on_value(Nullable&& opt, auto&... steps) &
         {
-            return Derived::execute(
+            return Derived::on_value_impl(
                 self(),
-                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived const&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) const&
+        constexpr auto on_value(Nullable&& opt, auto&... steps) const&
         {
-            return Derived::execute(
+            return Derived::on_value_impl(
                 self(),
-                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) &&
+        constexpr auto on_value(Nullable&& opt, auto&... steps) &&
         {
-            return Derived::execute(
+            return Derived::on_value_impl(
                 std::move(*this).self(),
-                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
 
         template <applicable_on<Derived const&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(has_value_tag const tag, Nullable&& opt, auto&... steps) const&&
+        constexpr auto on_value(Nullable&& opt, auto&... steps) const&&
         {
-            return Derived::execute(
+            return Derived::on_value_impl(
                 std::move(*this).self(),
-                tag,
                 std::forward<Nullable>(opt),
                 steps...);
         }
@@ -172,7 +168,10 @@ namespace gimo::detail
         {
             if (detail::has_value(opt))
             {
-                return Derived::execute(std::forward<Self>(self), has_value_tag{}, std::forward<Nullable>(opt), steps...);
+                return Derived::on_value_impl(
+                    std::forward<Self>(self),
+                    std::forward<Nullable>(opt),
+                    steps...);
             }
 
             return Derived::template on_null_impl<Nullable>(std::forward<Self>(self), steps...);
@@ -204,25 +203,21 @@ namespace gimo
 
         template <typename Self, nullable Nullable>
         [[nodiscard]]
-        static constexpr auto execute(
+        static constexpr auto on_value_impl(
             Self&& self,
-            detail::has_value_tag const tag,
             Nullable&& opt,
             auto& first,
             auto&... steps)
         {
             return std::invoke(
                 first,
-                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
+                on_value_impl(std::forward<Self>(self), std::forward<Nullable>(opt)),
                 steps...);
         }
 
         template <typename Self, nullable Nullable>
         [[nodiscard]]
-        static constexpr auto execute(
-            Self&& self,
-            [[maybe_unused]] detail::has_value_tag const,
-            Nullable&& opt)
+        static constexpr auto on_value_impl(Self&& self, Nullable&& opt)
         {
             return std::invoke(
                 std::forward<Self>(self).m_Action,
@@ -294,25 +289,17 @@ namespace gimo
 
         template <typename Self, nullable Nullable>
         [[nodiscard]]
-        static constexpr auto execute(
+        static constexpr auto on_value_impl(
             [[maybe_unused]] Self&& self,
-            detail::has_value_tag const tag,
             Nullable&& opt,
             auto& first,
             auto&... steps)
         {
-            return std::invoke(
-                first,
-                tag,
-                std::forward<Nullable>(opt),
-                steps...);
+            return first.on_value(std::forward<Nullable>(opt), steps...);
         }
 
         template <typename Self, nullable Nullable>
-        static constexpr auto execute(
-            [[maybe_unused]] Self&& self,
-            [[maybe_unused]] detail::has_value_tag const tag,
-            Nullable&& opt)
+        static constexpr auto on_value_impl([[maybe_unused]] Self&& self, Nullable&& opt)
         {
             return std::forward<Nullable>(opt);
         }
@@ -372,26 +359,20 @@ namespace gimo
 
         template <typename Self, nullable Nullable>
         [[nodiscard]]
-        static constexpr auto execute(
+        static constexpr auto on_value_impl(
             Self&& self,
-            detail::has_value_tag const tag,
             Nullable&& opt,
             auto& first,
             auto&... steps)
         {
-            return std::invoke(
-                first,
-                tag,
-                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
+            return first.on_value(
+                on_value_impl(std::forward<Self>(self),  std::forward<Nullable>(opt)),
                 steps...);
         }
 
         template <typename Self, nullable Nullable>
         [[nodiscard]]
-        static constexpr auto execute(
-            Self&& self,
-            [[maybe_unused]] detail::has_value_tag const tag,
-            Nullable&& opt)
+        static constexpr auto on_value_impl(Self&& self, Nullable&& opt)
         {
             return detail::rebind_value<Nullable>(
                 std::invoke(

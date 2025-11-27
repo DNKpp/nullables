@@ -59,10 +59,6 @@ namespace gimo::detail
             { u == t } -> boolean_testable;
             { u != t } -> boolean_testable;
         };
-
-    struct has_value_tag
-    {
-    };
 }
 
 namespace gimo
