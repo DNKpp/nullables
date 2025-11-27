@@ -30,6 +30,30 @@ namespace gimo
         {
         }
 
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) &
+        {
+            return apply(*this, std::forward<Nullable>(opt));
+        }
+
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) const &
+        {
+            return apply(*this, std::forward<Nullable>(opt));
+        }
+
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) &&
+        {
+            return apply(std::move(*this), std::forward<Nullable>(opt));
+        }
+
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) const &&
+        {
+            return apply(std::move(*this), std::forward<Nullable>(opt));
+        }
+
         template <typename... SuffixSteps>
         constexpr auto append(Pipeline<SuffixSteps...> suffix) const&
         {
@@ -40,19 +64,6 @@ namespace gimo
         constexpr auto append(Pipeline<SuffixSteps...> suffix) &&
         {
             return append(std::move(*this), std::move(suffix.m_Steps));
-        }
-
-        template <nullable Nullable>
-        constexpr auto apply(Nullable&& opt) const
-        {
-            return std::apply(
-                [&](auto const& first, auto const&... steps) {
-                    return std::invoke(
-                        first,
-                        std::forward<Nullable>(opt),
-                        steps...);
-                },
-                m_Steps);
         }
 
         template <typename... SuffixSteps>
@@ -71,6 +82,20 @@ namespace gimo
 
     private:
         std::tuple<Steps...> m_Steps{};
+
+        template <typename Self, typename Nullable>
+        [[nodiscard]]
+        static constexpr auto apply(Self&& self, Nullable&& opt)
+        {
+            return std::apply(
+                [&]<typename First, typename... Others>(First&& first, Others&&... steps) {
+                    return std::invoke(
+                        std::forward<First>(first),
+                        std::forward<Nullable>(opt),
+                        std::forward<Others>(steps)...);
+                },
+                std::forward<Self>(self).m_Steps);
+        }
 
         template <typename Self, typename... SuffixSteps>
         [[nodiscard]]
