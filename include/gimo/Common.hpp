@@ -63,10 +63,6 @@ namespace gimo::detail
     struct has_value_tag
     {
     };
-
-    struct is_empty_tag
-    {
-    };
 }
 
 namespace gimo

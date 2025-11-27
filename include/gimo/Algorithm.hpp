@@ -102,46 +102,30 @@ namespace gimo::detail
 
         template <applicable_on<Derived&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) &
+        constexpr auto on_null(auto&... steps) &
         {
-            return Derived::execute(
-                self(),
-                tag,
-                std::forward<Nullable>(opt),
-                steps...);
+            return Derived::template on_null_impl<Nullable>(self(), steps...);
         }
 
         template <applicable_on<Derived const&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) const&
+        constexpr auto on_null(auto&... steps) const &
         {
-            return Derived::execute(
-                self(),
-                tag,
-                std::forward<Nullable>(opt),
-                steps...);
+            return Derived::template on_null_impl<Nullable>(self(), steps...);
         }
 
         template <applicable_on<Derived&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) &&
+        constexpr auto on_null(auto&... steps) &&
         {
-            return Derived::execute(
-                std::move(*this).self(),
-                tag,
-                std::forward<Nullable>(opt),
-                steps...);
+            return Derived::template on_null_impl<Nullable>(std::move(*this).self(), steps...);
         }
 
         template <applicable_on<Derived const&&> Nullable>
         [[nodiscard]]
-        constexpr auto operator()(is_empty_tag const tag, Nullable&& opt, auto&... steps) const&&
+        constexpr auto on_null(auto&... steps) const &&
         {
-            return Derived::execute(
-                std::move(*this).self(),
-                tag,
-                std::forward<Nullable>(opt),
-                steps...);
+            return Derived::template on_null_impl<Nullable>(std::move(*this).self(), steps...);
         }
 
     protected:
@@ -191,7 +175,7 @@ namespace gimo::detail
                 return Derived::execute(std::forward<Self>(self), has_value_tag{}, std::forward<Nullable>(opt), steps...);
             }
 
-            return Derived::execute(std::forward<Self>(self), is_empty_tag{}, std::forward<Nullable>(opt), steps...);
+            return Derived::template on_null_impl<Nullable>(std::forward<Self>(self), steps...);
         }
     };
 }
@@ -202,7 +186,8 @@ namespace gimo
     class AndThenAlgorithm
         : private detail::ComposableAlgorithmBase<AndThenAlgorithm<Action>>
     {
-        friend class detail::ComposableAlgorithmBase<AndThenAlgorithm>;
+        using Super = detail::ComposableAlgorithmBase<AndThenAlgorithm>;
+        friend Super;
 
     public:
         [[nodiscard]]
@@ -211,7 +196,8 @@ namespace gimo
         {
         }
 
-        using detail::ComposableAlgorithmBase<AndThenAlgorithm>::operator();
+        using Super::operator();
+        using Super::on_null;
 
     private:
         Action m_Action;
@@ -243,28 +229,21 @@ namespace gimo
                 value(std::forward<Nullable>(opt)));
         }
 
-        template <typename Self, nullable Nullable>
+        template <nullable Nullable, typename Self>
         [[nodiscard]]
-        static constexpr auto execute(
-            Self&& self,
-            detail::is_empty_tag const tag,
-            Nullable&& opt,
+        static constexpr auto on_null_impl(
+            [[maybe_unused]] Self&& self,
             auto& first,
             auto&... steps)
         {
-            return std::invoke(
-                first,
-                tag,
-                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
-                steps...);
+            using Result = decltype(on_null_impl<Nullable>(std::forward<Self>(self)));
+
+            return first.template on_null<Result>(steps...);
         }
 
-        template <typename Self, nullable Nullable>
+        template <nullable Nullable, typename Self>
         [[nodiscard]]
-        static constexpr auto execute(
-            [[maybe_unused]] Self&& self,
-            [[maybe_unused]] detail::is_empty_tag const tag,
-            [[maybe_unused]] Nullable&& opt)
+        static constexpr auto on_null_impl([[maybe_unused]] Self&& self)
         {
             using Result = std::invoke_result_t<Action, reference_type_t<Nullable>>;
 
@@ -297,7 +276,8 @@ namespace gimo
     class OrElseAlgorithm
         : private detail::ComposableAlgorithmBase<OrElseAlgorithm<Action>>
     {
-        friend class detail::ComposableAlgorithmBase<OrElseAlgorithm>;
+        using Super = detail::ComposableAlgorithmBase<OrElseAlgorithm>;
+        friend Super;
 
     public:
         [[nodiscard]]
@@ -306,7 +286,8 @@ namespace gimo
         {
         }
 
-        using detail::ComposableAlgorithmBase<OrElseAlgorithm>::operator();
+        using Super::operator();
+        using Super::on_null;
 
     private:
         Action m_Action;
@@ -336,27 +317,22 @@ namespace gimo
             return std::forward<Nullable>(opt);
         }
 
-        template <typename Self, nullable Nullable>
+        template <nullable Nullable, typename Self>
         [[nodiscard]]
-        static constexpr auto execute(
+        static constexpr auto on_null_impl(
             Self&& self,
-            detail::is_empty_tag const tag,
-            Nullable&& opt,
             auto& first,
             auto&... steps)
         {
             return std::invoke(
                 first,
-                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
+                on_null_impl<Nullable>(std::forward<Self>(self)),
                 steps...);
         }
 
-        template <typename Self, nullable Nullable>
+        template <nullable Nullable, typename Self>
         [[nodiscard]]
-        static constexpr auto execute(
-            Self&& self,
-            [[maybe_unused]] detail::is_empty_tag const tag,
-            [[maybe_unused]] Nullable&& opt)
+        static constexpr auto on_null_impl(Self&& self)
         {
             return std::invoke(std::forward<Self>(self).m_Action);
         }
@@ -378,7 +354,8 @@ namespace gimo
     struct TransformAlgorithm
         : private detail::ComposableAlgorithmBase<TransformAlgorithm<Action>>
     {
-        friend class detail::ComposableAlgorithmBase<TransformAlgorithm>;
+        using Super = detail::ComposableAlgorithmBase<TransformAlgorithm>;
+        friend Super;
 
     public:
         [[nodiscard]]
@@ -387,7 +364,8 @@ namespace gimo
         {
         }
 
-        using detail::ComposableAlgorithmBase<TransformAlgorithm>::operator();
+        using Super::operator();
+        using Super::on_null;
 
     private:
         Action m_Action;
@@ -421,30 +399,23 @@ namespace gimo
                     value(std::forward<Nullable>(opt))));
         }
 
-        template <typename Self, nullable Nullable>
+        template <nullable Nullable, typename Self>
         [[nodiscard]]
-        static constexpr auto execute(
-            Self&& self,
-            detail::is_empty_tag const tag,
-            Nullable&& opt,
+        static constexpr auto on_null_impl(
+            [[maybe_unused]] Self&& self,
             auto& first,
             auto&... steps)
         {
-            return std::invoke(
-                first,
-                tag,
-                execute(std::forward<Self>(self), tag, std::forward<Nullable>(opt)),
-                steps...);
+            using Result = decltype(on_null_impl<Nullable>(std::forward<Self>(self)));
+
+            return first.template on_null<Result>(steps...);
         }
 
-        template <typename Self, nullable Nullable>
+        template <nullable Nullable, typename Self>
         [[nodiscard]]
-        static constexpr auto execute(
-            [[maybe_unused]] Self&& self,
-            [[maybe_unused]] detail::is_empty_tag const tag,
-            [[maybe_unused]] Nullable&& opt)
+        static constexpr auto on_null_impl([[maybe_unused]] Self&& self)
         {
-            using Result = std::invoke_result_t<Action, decltype(value(std::forward<Nullable>(opt)))>;
+            using Result = std::invoke_result_t<Action, reference_type_t<Nullable>>;
 
             return detail::construct_empty<rebind_value_t<Nullable, Result>>();
         }
