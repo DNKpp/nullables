@@ -9,12 +9,9 @@ set(TARGET_NAME gimo-tests)
 
 add_executable(${TARGET_NAME}
     "Common.cpp"
-    "AndThenAlgorithm.cpp"
-    "OrElseAlgorithm.cpp"
-    "TransformAlgorithm.cpp"
     "Pipeline.cpp"
 )
-
+add_subdirectory(algorithm)
 add_subdirectory(config)
 
 target_include_directories(${TARGET_NAME} PRIVATE

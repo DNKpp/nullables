@@ -3,8 +3,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          https://www.boost.org/LICENSE_1_0.txt)
 
+#include "gimo/algorithm/OrElse.hpp"
 #include "gimo_ext/std_optional.hpp"
-#include "gimo/Algorithm.hpp"
 
 TEST_CASE(
     "OrElseAlgorithm invokes its action only when the input has no value."
@@ -17,7 +17,7 @@ TEST_CASE(
         std::optional<int>() const&&>
         action{};
 
-    using Algorithm = gimo::OrElseAlgorithm<decltype(action)>;
+    using Algorithm = gimo::detail::OrElse<decltype(action)>;
     static_assert(gimo::nullable<std::optional<int>>);
     static_assert(std::destructible<gimo::traits<std::optional<int>>>);
     STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm&>);
@@ -32,7 +32,7 @@ TEST_CASE(
         {
             SCOPED_EXP action.expect_call()
                 and finally::returns(std::optional{42});
-            gimo::OrElseAlgorithm orElse{std::move(action)};
+            gimo::detail::OrElse orElse{std::move(action)};
             decltype(auto) result = orElse(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -42,7 +42,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::as_const(action).expect_call()
                 and finally::returns(std::optional{42});
-            gimo::OrElseAlgorithm orElse{std::move(action)};
+            gimo::detail::OrElse orElse{std::move(action)};
             decltype(auto) result = std::as_const(orElse)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -52,7 +52,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(action).expect_call()
                 and finally::returns(std::optional{42});
-            gimo::OrElseAlgorithm orElse{std::move(action)};
+            gimo::detail::OrElse orElse{std::move(action)};
             decltype(auto) result = std::move(orElse)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -62,7 +62,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(std::as_const(action)).expect_call()
                 and finally::returns(std::optional{42});
-            gimo::OrElseAlgorithm orElse{std::move(action)};
+            gimo::detail::OrElse orElse{std::move(action)};
             decltype(auto) result = std::move(std::as_const(orElse))(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -71,7 +71,7 @@ TEST_CASE(
 
     SECTION("When input has a value, the action is not invoked.")
     {
-        gimo::OrElseAlgorithm orElse{std::move(action)};
+        gimo::detail::OrElse orElse{std::move(action)};
         constexpr std::optional opt{1337};
 
         SECTION("When algorithm is used via lvalue-ref overload.")
