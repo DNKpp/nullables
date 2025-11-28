@@ -37,7 +37,7 @@ namespace gimo
         }
 
         template <nullable Nullable>
-        constexpr auto apply(Nullable&& opt) const &
+        constexpr auto apply(Nullable&& opt) const&
         {
             return apply(*this, std::forward<Nullable>(opt));
         }
@@ -49,7 +49,7 @@ namespace gimo
         }
 
         template <nullable Nullable>
-        constexpr auto apply(Nullable&& opt) const &&
+        constexpr auto apply(Nullable&& opt) const&&
         {
             return apply(std::move(*this), std::forward<Nullable>(opt));
         }
@@ -107,6 +107,43 @@ namespace gimo
                 std::tuple_cat(std::forward<Self>(self).m_Steps, std::move(suffixSteps))};
         }
     };
+
+    namespace detail
+    {
+        // clang-format off
+        template <typename T>
+        struct is_pipeline : public std::false_type{};
+
+        template <typename... Steps>
+        struct is_pipeline<Pipeline<Steps...>> : public std::true_type{};
+
+        template <typename... Steps>
+        struct is_pipeline<Pipeline<Steps...> const> : public std::true_type{};
+
+        template <typename... Steps>
+        struct is_pipeline<Pipeline<Steps...>&> : public std::true_type{};
+
+        template <typename... Steps>
+        struct is_pipeline<Pipeline<Steps...> const&> : public std::true_type{};
+
+        template <typename... Steps>
+        struct is_pipeline<Pipeline<Steps...>&&> : public std::true_type{};
+
+        template <typename... Steps>
+        struct is_pipeline<Pipeline<Steps...> const&&> : public std::true_type{};
+
+        // clang-format on
+    }
+
+    template <typename T>
+    concept pipeline = detail::is_pipeline<T>::value;
+
+    template <nullable Nullable, pipeline Pipeline>
+    [[nodiscard]]
+    constexpr auto apply(Nullable&& opt, Pipeline&& steps)
+    {
+        return std::forward<Pipeline>(steps).apply(std::forward<Nullable>(opt));
+    }
 }
 
 #endif

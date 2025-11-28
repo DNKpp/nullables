@@ -21,7 +21,7 @@
 namespace gimo::detail
 {
     template <typename Action>
-    struct Transform
+    class Transform
         : private ComposableAlgorithmBase<Transform<Action>>
     {
         using Super = ComposableAlgorithmBase<Transform>;
@@ -39,19 +39,19 @@ namespace gimo::detail
         using Super::on_value;
 
     private:
-        Action m_Action;
+        [[no_unique_address]] Action m_Action;
 
-        template <typename Self, nullable Nullable>
+        template <typename Self, nullable Nullable, typename First, typename... Steps>
         [[nodiscard]]
         static constexpr auto on_value_impl(
             Self&& self,
             Nullable&& opt,
-            auto& first,
-            auto&... steps)
+            First&& first,
+            Steps&&... steps)
         {
-            return first.on_value(
+            return std::forward<First>(first).on_value(
                 on_value_impl(std::forward<Self>(self), std::forward<Nullable>(opt)),
-                steps...);
+                std::forward<Steps>(steps)...);
         }
 
         template <typename Self, nullable Nullable>
@@ -64,16 +64,17 @@ namespace gimo::detail
                     value(std::forward<Nullable>(opt))));
         }
 
-        template <nullable Nullable, typename Self>
+        template <nullable Nullable, typename Self, typename First, typename... Steps>
         [[nodiscard]]
         static constexpr auto on_null_impl(
             [[maybe_unused]] Self&& self,
-            auto& first,
-            auto&... steps)
+            First&& first,
+            Steps&&... steps)
         {
             using Result = decltype(on_null_impl<Nullable>(std::forward<Self>(self)));
 
-            return first.template on_null<Result>(steps...);
+            return std::forward<First>(first).template on_null<Result>(
+                std::forward<Steps>(steps)...);
         }
 
         template <nullable Nullable, typename Self>

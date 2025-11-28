@@ -14,8 +14,8 @@
 
 #include <concepts>
 #include <functional>
-#include <type_traits>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace gimo::detail
@@ -39,17 +39,19 @@ namespace gimo::detail
         using Super::on_value;
 
     private:
-        Action m_Action;
+        [[no_unique_address]] Action m_Action;
 
-        template <typename Self, nullable Nullable>
+        template <typename Self, nullable Nullable, typename First, typename... Steps>
         [[nodiscard]]
         static constexpr auto on_value_impl(
             [[maybe_unused]] Self&& self,
             Nullable&& opt,
-            auto& first,
-            auto&... steps)
+            First& first,
+            Steps&&... steps)
         {
-            return first.on_value(std::forward<Nullable>(opt), steps...);
+            return std::forward<First>(first).on_value(
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
         }
 
         template <typename Self, nullable Nullable>
@@ -58,17 +60,17 @@ namespace gimo::detail
             return std::forward<Nullable>(opt);
         }
 
-        template <nullable Nullable, typename Self>
+        template <nullable Nullable, typename Self, typename First, typename... Steps>
         [[nodiscard]]
         static constexpr auto on_null_impl(
             Self&& self,
-            auto& first,
-            auto&... steps)
+            First&& first,
+            Steps&&... steps)
         {
             return std::invoke(
-                first,
+                std::forward<First>(first),
                 on_null_impl<Nullable>(std::forward<Self>(self)),
-                steps...);
+                std::forward<Steps>(steps)...);
         }
 
         template <nullable Nullable, typename Self>
