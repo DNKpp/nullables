@@ -3,30 +3,42 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          https://www.boost.org/LICENSE_1_0.txt)
 
-#include "gimo/Algorithm.hpp"
 #include "gimo/Pipeline.hpp"
+#include "gimo/algorithm/AndThen.hpp"
 #include "gimo_ext/std_optional.hpp"
 
+#include <random>
 
 TEST_CASE("benchmark")
 {
-    std::optional<int> opt =
-        Catch::rngSeed() % 2 == 0 ? std::nullopt : std::optional<int>{1337};
+    std::mt19937 rng{Catch::rngSeed()};
+    std::uniform_int_distribution distribution{};
 
-    BENCHMARK("Member")
+    BENCHMARK_ADVANCED("Member")(Catch::Benchmark::Chronometer meter)
     {
-        return opt.and_then([](auto const& x) { return std::optional{x * x}; })
-            .and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
-            .and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; });
+        std::optional<int> const opt =
+             distribution(rng) % 2 == 0 ? std::nullopt : std::optional<int>{1337};
+
+        meter.measure(
+            [=] {
+                return opt.and_then([](auto const& x) { return std::optional{x * x}; })
+                    .and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
+                    .and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; });
+            });
     };
 
-    BENCHMARK("gimo")
+    BENCHMARK_ADVANCED("gimo")(Catch::Benchmark::Chronometer meter)
     {
-        static constexpr auto pipeline =
-            gimo::and_then([](auto const& x) { return std::optional{x * x}; })
-            | gimo::and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
-            | gimo::and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; });
+        std::optional<int> const opt =
+            distribution(rng) % 2 == 0 ? std::nullopt : std::optional<int>{1337};
 
-        return pipeline.apply(opt);
+        meter.measure(
+            [=] {
+                return gimo::apply(
+                    opt,
+                    gimo::and_then([](auto const& x) { return std::optional{x * x}; })
+                        | gimo::and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
+                        | gimo::and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; }));
+            });
     };
 }
