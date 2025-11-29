@@ -18,90 +18,90 @@
 #include <type_traits>
 #include <utility>
 
-namespace gimo::detail
+namespace gimo::detail::or_else
 {
-    template <typename Action>
-    class OrElse
-        : private ComposableAlgorithmBase<OrElse<Action>>
+    template <typename Action, nullable Nullable>
+    [[nodiscard]]
+    constexpr auto on_value([[maybe_unused]] Action&& action, Nullable&& opt)
     {
-        using Super = ComposableAlgorithmBase<OrElse>;
-        friend Super;
+        return std::forward<Nullable>(opt);
+    }
 
-    public:
+    template <typename Action, nullable Nullable, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_value(
+        [[maybe_unused]] Action&& action,
+        Nullable&& opt,
+        Next&& next,
+        Steps&&... steps)
+    {
+        return std::forward<Next>(next).on_value(
+            std::forward<Nullable>(opt),
+            std::forward<Steps>(steps)...);
+    }
+
+    template <nullable Nullable, typename Action>
+    [[nodiscard]]
+    static constexpr auto on_null(Action&& action)
+    {
+        return std::invoke(std::forward<Action>(action));
+    }
+
+    template <nullable Nullable, typename Action, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_null(Action&& action, Next&& next, Steps&&... steps)
+    {
+        return std::invoke(
+            std::forward<Next>(next),
+            or_else::on_null<Nullable>(std::forward<Action>(action)),
+            std::forward<Steps>(steps)...);
+    }
+
+    struct traits
+    {
+        template <nullable Nullable, typename Action>
+        static constexpr bool is_applicable_on = requires {
+            requires std::same_as<
+                std::remove_cvref_t<Nullable>,
+                std::remove_cvref_t<std::invoke_result_t<Action>>>;
+        };
+
+        template <typename Action, nullable Nullable, typename... Steps>
         [[nodiscard]]
-        explicit constexpr OrElse(Action action) noexcept(std::is_nothrow_move_constructible_v<Action>)
-            : m_Action{std::move(action)}
+        static constexpr auto on_value(Action&& action, Nullable&& opt, Steps&&... steps)
         {
-        }
-
-        using Super::operator();
-        using Super::on_null;
-        using Super::on_value;
-
-    private:
-        [[no_unique_address]] Action m_Action;
-
-        template <typename Self, nullable Nullable, typename First, typename... Steps>
-        [[nodiscard]]
-        static constexpr auto on_value_impl(
-            [[maybe_unused]] Self&& self,
-            Nullable&& opt,
-            First& first,
-            Steps&&... steps)
-        {
-            return std::forward<First>(first).on_value(
+            return or_else::on_value(
+                std::forward<Action>(action),
                 std::forward<Nullable>(opt),
                 std::forward<Steps>(steps)...);
         }
 
-        template <typename Self, nullable Nullable>
-        static constexpr auto on_value_impl([[maybe_unused]] Self&& self, Nullable&& opt)
-        {
-            return std::forward<Nullable>(opt);
-        }
-
-        template <nullable Nullable, typename Self, typename First, typename... Steps>
+        template <nullable Nullable, typename Action, typename... Steps>
         [[nodiscard]]
-        static constexpr auto on_null_impl(
-            Self&& self,
-            First&& first,
-            Steps&&... steps)
+        static constexpr auto on_null(Action&& action, Steps&&... steps)
         {
-            return std::invoke(
-                std::forward<First>(first),
-                on_null_impl<Nullable>(std::forward<Self>(self)),
+            return or_else::on_null<Nullable>(
+                std::forward<Action>(action),
                 std::forward<Steps>(steps)...);
         }
-
-        template <nullable Nullable, typename Self>
-        [[nodiscard]]
-        static constexpr auto on_null_impl(Self&& self)
-        {
-            return std::invoke(std::forward<Self>(self).m_Action);
-        }
-    };
-
-    template <typename Action>
-    struct is_applicable<OrElse<Action>>
-    {
-        template <typename Self, nullable Nullable>
-            requires std::same_as<OrElse<Action>, std::remove_cvref_t<Self>>
-        static constexpr bool value = requires {
-            requires std::same_as<
-                std::remove_cvref_t<Nullable>,
-                std::remove_cvref_t<std::invoke_result_t<const_ref_like_t<Self, Action>>>>;
-        };
     };
 }
 
 namespace gimo
 {
+    namespace detail
+    {
+        template <typename Action>
+        using or_else_t = BasicAlgorithm<or_else::traits, Action>;
+    }
+
     template <typename Action>
     [[nodiscard]]
     constexpr auto or_else(Action&& action)
     {
-        return Pipeline{
-            std::make_tuple(detail::OrElse{std::forward<Action>(action)})};
+        using Algorithm = detail::or_else_t<Action>;
+
+        return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
     }
 }
 

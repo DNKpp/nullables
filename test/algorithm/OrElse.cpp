@@ -17,13 +17,11 @@ TEST_CASE(
         std::optional<int>() const&&>
         action{};
 
-    using Algorithm = gimo::detail::OrElse<decltype(action)>;
-    static_assert(gimo::nullable<std::optional<int>>);
-    static_assert(std::destructible<gimo::traits<std::optional<int>>>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<int>, Algorithm const&&>);
+    using Algorithm = gimo::detail::or_else_t<decltype(action)>;
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm const&&>);
 
     SECTION("When input has no value, the action is invoked.")
     {
@@ -32,7 +30,7 @@ TEST_CASE(
         {
             SCOPED_EXP action.expect_call()
                 and finally::returns(std::optional{42});
-            gimo::detail::OrElse orElse{std::move(action)};
+            Algorithm orElse{std::move(action)};
             decltype(auto) result = orElse(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -42,7 +40,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::as_const(action).expect_call()
                 and finally::returns(std::optional{42});
-            gimo::detail::OrElse orElse{std::move(action)};
+            Algorithm orElse{std::move(action)};
             decltype(auto) result = std::as_const(orElse)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -52,7 +50,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(action).expect_call()
                 and finally::returns(std::optional{42});
-            gimo::detail::OrElse orElse{std::move(action)};
+            Algorithm orElse{std::move(action)};
             decltype(auto) result = std::move(orElse)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -62,7 +60,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(std::as_const(action)).expect_call()
                 and finally::returns(std::optional{42});
-            gimo::detail::OrElse orElse{std::move(action)};
+            Algorithm orElse{std::move(action)};
             decltype(auto) result = std::move(std::as_const(orElse))(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -71,7 +69,7 @@ TEST_CASE(
 
     SECTION("When input has a value, the action is not invoked.")
     {
-        gimo::detail::OrElse orElse{std::move(action)};
+        Algorithm orElse{std::move(action)};
         constexpr std::optional opt{1337};
 
         SECTION("When algorithm is used via lvalue-ref overload.")
