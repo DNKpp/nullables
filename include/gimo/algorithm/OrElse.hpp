@@ -1,7 +1,7 @@
-//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          https://www.boost.org/LICENSE_1_0.txt)
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef GIMO_ALGORITHM_OR_ELSE_HPP
 #define GIMO_ALGORITHM_OR_ELSE_HPP
@@ -42,7 +42,7 @@ namespace gimo::detail::or_else
 
     template <nullable Nullable, typename Action>
     [[nodiscard]]
-    static constexpr auto on_null(Action&& action)
+    constexpr auto on_null(Action&& action)
     {
         return std::invoke(std::forward<Action>(action));
     }

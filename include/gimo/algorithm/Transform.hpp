@@ -1,7 +1,7 @@
-//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          https://www.boost.org/LICENSE_1_0.txt)
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef GIMO_ALGORITHM_AND_THEN_HPP
 #define GIMO_ALGORITHM_AND_THEN_HPP
@@ -45,7 +45,7 @@ namespace gimo::detail::transform
 
     template <nullable Nullable, typename Action>
     [[nodiscard]]
-    static constexpr auto on_null([[maybe_unused]] Action&& action)
+    constexpr auto on_null([[maybe_unused]] Action&& action)
     {
         using Result = std::invoke_result_t<Action, reference_type_t<Nullable>>;
 
