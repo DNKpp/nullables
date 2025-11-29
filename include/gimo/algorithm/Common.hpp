@@ -1,7 +1,7 @@
-//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          https://www.boost.org/LICENSE_1_0.txt)
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef GIMO_ALGORITHM_COMMON_HPP
 #define GIMO_ALGORITHM_COMMON_HPP
@@ -9,6 +9,7 @@
 #pragma once
 
 #include "gimo/Common.hpp"
+#include "gimo/Config.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -104,6 +105,8 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) &
         {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
             return Traits::on_value(
                 m_Action,
                 std::forward<Nullable>(opt),
@@ -114,6 +117,8 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&
         {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
             return Traits::on_value(
                 m_Action,
                 std::forward<Nullable>(opt),
@@ -124,6 +129,8 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) &&
         {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
             return Traits::on_value(
                 std::move(m_Action),
                 std::forward<Nullable>(opt),
@@ -134,6 +141,8 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&&
         {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
             return Traits::on_value(
                 std::move(m_Action),
                 std::forward<Nullable>(opt),
@@ -144,6 +153,7 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) &
         {
+            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
             return Traits::template on_null<Nullable>(
                 m_Action,
                 std::forward<Steps>(steps)...);
@@ -153,6 +163,8 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) const&
         {
+            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
+
             return Traits::template on_null<Nullable>(
                 m_Action,
                 std::forward<Steps>(steps)...);
@@ -162,6 +174,8 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) &&
         {
+            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
+
             return Traits::template on_null<Nullable>(
                 std::move(m_Action),
                 std::forward<Steps>(steps)...);
@@ -171,6 +185,8 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) const&&
         {
+            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
+
             return Traits::template on_null<Nullable>(
                 std::move(m_Action),
                 std::forward<Steps>(steps)...);
