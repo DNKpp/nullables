@@ -54,11 +54,11 @@ TEST_CASE(
         std::optional<int>(float) const&&>
         action{};
 
-    using Algorithm = gimo::detail::AndThen<decltype(action)>;
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&&>);
+    using Algorithm = gimo::detail::and_then_t<decltype(action)>;
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&&>);
 
     SECTION("When input has a value, the action is invoked.")
     {
@@ -67,7 +67,7 @@ TEST_CASE(
         {
             SCOPED_EXP action.expect_call(1337.f)
                 and finally::returns(std::optional{42});
-            gimo::detail::AndThen andThen{std::move(action)};
+            Algorithm andThen{std::move(action)};
             decltype(auto) result = andThen(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -77,7 +77,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::as_const(action).expect_call(1337.f)
                 and finally::returns(std::optional{42});
-            gimo::detail::AndThen andThen{std::move(action)};
+            Algorithm andThen{std::move(action)};
             decltype(auto) result = std::as_const(andThen)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -87,7 +87,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(action).expect_call(1337.f)
                 and finally::returns(std::optional{42});
-            gimo::detail::AndThen andThen{std::move(action)};
+            Algorithm andThen{std::move(action)};
             decltype(auto) result = std::move(andThen)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -97,7 +97,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(std::as_const(action)).expect_call(1337.f)
                 and finally::returns(std::optional{42});
-            gimo::detail::AndThen andThen{std::move(action)};
+            Algorithm andThen{std::move(action)};
             decltype(auto) result = std::move(std::as_const(andThen))(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -106,7 +106,7 @@ TEST_CASE(
 
     SECTION("When input is empty, action is not invoked.")
     {
-        gimo::detail::AndThen andThen{std::move(action)};
+        Algorithm andThen{std::move(action)};
         constexpr std::optional<float> opt{};
 
         SECTION("When algorithm is used via lvalue-ref overload.")
@@ -149,13 +149,13 @@ TEST_CASE(
         std::optional<int>(float&&) const,
         std::optional<int>(float const&&) const>
         action{};
-    gimo::detail::AndThen const andThen{std::cref(action)};
+    using Algorithm = gimo::detail::and_then_t<decltype(std::cref(action))>;
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&&>);
 
-    using Algorithm = std::remove_const_t<decltype(andThen)>;
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&&>);
+    Algorithm const andThen{std::cref(action)};
 
     std::optional opt{1337.f};
     SECTION("When argument is provided as lvalue-ref.")
