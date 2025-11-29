@@ -7,38 +7,68 @@
 #include "gimo/algorithm/AndThen.hpp"
 #include "gimo_ext/std_optional.hpp"
 
-#include <random>
+#define ANKERL_NANOBENCH_IMPLEMENT
+#include <nanobench.h>
 
-TEST_CASE("benchmark")
+namespace
 {
-    std::mt19937 rng{Catch::rngSeed()};
-    std::uniform_int_distribution distribution{};
-
-    BENCHMARK_ADVANCED("Member")(Catch::Benchmark::Chronometer meter)
+    auto make_setup(std::string prefix, unsigned const seed)
     {
-        std::optional<int> const opt =
-             distribution(rng) % 2 == 0 ? std::nullopt : std::optional<int>{1337};
+        std::optional<int> opt =
+            seed % 2 == 0 ? std::nullopt : std::optional<int>{1337};
+        prefix += " - with ";
+        prefix += !opt
+                    ? "nullopt"
+                    : "optional{1337}";
 
-        meter.measure(
-            [=] {
-                return opt.and_then([](auto const& x) { return std::optional{x * x}; })
-                    .and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
-                    .and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; });
+        return std::make_tuple(std::move(opt), std::move(prefix));
+    }
+
+    void StdOptionalAndThenChain(ankerl::nanobench::Bench& bench, unsigned const seed)
+    {
+        auto const [opt, name] = make_setup("std::optional::and_then", seed);
+
+        bench.run(
+            name.data(),
+            [&] {
+                auto r = opt.and_then([](auto const& x) { return std::optional{static_cast<float>(x) + 1}; })
+                             .and_then([](float const x) { return std::optional{static_cast<short>(x) + 1}; })
+                             .and_then([](short const x) { return std::optional{static_cast<float>(x) + 1}; });
+
+                ankerl::nanobench::doNotOptimizeAway(r);
             });
-    };
+    }
 
-    BENCHMARK_ADVANCED("gimo")(Catch::Benchmark::Chronometer meter)
+    void GimoAndThenChain(ankerl::nanobench::Bench& bench, unsigned const seed)
     {
-        std::optional<int> const opt =
-            distribution(rng) % 2 == 0 ? std::nullopt : std::optional<int>{1337};
+        auto const [opt, name] = make_setup("gimo::and_then", seed);
 
-        meter.measure(
-            [=] {
-                return gimo::apply(
+        bench.run(
+            name.data(),
+            [&] {
+                auto const r = gimo::apply(
                     opt,
-                    gimo::and_then([](auto const& x) { return std::optional{x * x}; })
-                        | gimo::and_then([](int const x) { return std::optional{static_cast<float>(x)}; })
-                        | gimo::and_then([](float const x) { return std::optional{std::fmod(x, 0.5f)}; }));
+                    gimo::and_then([](auto const& x) { return std::optional{static_cast<float>(x) + 1}; })
+                        | gimo::and_then([](float const x) { return std::optional{static_cast<short>(x) + 1}; })
+                        | gimo::and_then([](short const x) { return std::optional{static_cast<float>(x) + 1}; }));
+
+                ankerl::nanobench::doNotOptimizeAway(r);
             });
-    };
+    }
+}
+
+int main()
+{
+    [[maybe_unused]] auto const seed = std::random_device{}();
+
+    ankerl::nanobench::Bench bench{};
+    bench.relative(true)
+        .warmup(1000)
+        .minEpochIterations(100'000'000)
+        .performanceCounters(true);
+
+    StdOptionalAndThenChain(bench, 1);
+    GimoAndThenChain(bench, 1);
+    StdOptionalAndThenChain(bench, 2);
+    GimoAndThenChain(bench, 2);
 }

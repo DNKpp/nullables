@@ -19,16 +19,12 @@ include(EnableSanitizers)
 enable_sanitizers(${TARGET_NAME})
 
 include(EnableWarnings)
-find_package(Catch2 REQUIRED)
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+CPMAddPackage("gh:google/benchmark@1.9.4")
+CPMAddPackage("gh:martinus/nanobench@4.3.11")
 target_link_libraries(${TARGET_NAME} PRIVATE
-    gimo::gimo
+    nanobench::nanobench
     gimo::internal::enable-warnings
 
-    Catch2::Catch2WithMain
+    gimo::gimo
 )
-
-target_precompile_headers(${TARGET_NAME} PRIVATE
-    <catch2/catch_all.hpp>
-)
-
-catch_discover_tests(${TARGET_NAME})
