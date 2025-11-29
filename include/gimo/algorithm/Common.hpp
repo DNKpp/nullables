@@ -13,37 +13,37 @@
 #include <type_traits>
 #include <utility>
 
-namespace gimo::detail
+namespace gimo
 {
-    template <typename T>
-    struct algorithm_traits;
-
-    template <typename Traits, typename Action, typename Nullable, typename... Steps>
-    [[nodiscard]]
-    static constexpr auto test_and_execute(Action&& action, Nullable&& opt, Steps&&... steps)
+    namespace detail
     {
-        if (detail::has_value(opt))
+        template <typename Traits, typename Action, typename Nullable, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto test_and_execute(Action&& action, Nullable&& opt, Steps&&... steps)
         {
-            return Traits::on_value(
+            if (detail::has_value(opt))
+            {
+                return Traits::on_value(
+                    std::forward<Action>(action),
+                    std::forward<Nullable>(opt),
+                    std::forward<Steps>(steps)...);
+            }
+
+            return Traits::template on_null<Nullable>(
                 std::forward<Action>(action),
-                std::forward<Nullable>(opt),
                 std::forward<Steps>(steps)...);
         }
 
-        return Traits::template on_null<Nullable>(
-            std::forward<Action>(action),
-            std::forward<Steps>(steps)...);
+        template <typename Nullable, typename Traits, typename Action>
+        concept applicable_on = Traits::template is_applicable_on<Nullable, Action>;
     }
-
-    template <typename Nullable, typename Traits, typename Action>
-    concept applicable_on_impl_internal = Traits::template is_applicable_on<Nullable, Action>;
 
     template <typename Nullable, typename Algorithm>
     concept applicable_on_impl = requires {
-        requires applicable_on_impl_internal<
+        requires detail::applicable_on<
             Nullable,
             typename std::remove_cvref_t<Algorithm>::traits_type,
-            const_ref_like_t<Algorithm, typename std::remove_cvref_t<Algorithm>::action_type>>;
+            detail::const_ref_like_t<Algorithm, typename std::remove_cvref_t<Algorithm>::action_type>>;
     };
 
     template <typename Traits, typename Action>
@@ -178,188 +178,6 @@ namespace gimo::detail
 
     private:
         [[maybe_unused]] Action m_Action;
-    };
-
-    template <typename T>
-    struct is_applicable;
-
-    template <typename Nullable, typename Algorithm>
-    concept applicable_on = is_applicable<std::remove_cvref_t<Algorithm>>::template value<Algorithm&&, Nullable&&>;
-
-    template <typename Derived>
-    class ComposableAlgorithmBase
-    {
-    public:
-        template <applicable_on<Derived&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto operator()(Nullable&& opt, Steps&&... steps) &
-        {
-            return test_and_execute(
-                self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived const&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto operator()(Nullable&& opt, Steps&&... steps) const&
-        {
-            return test_and_execute(
-                self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived&&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto operator()(Nullable&& opt, Steps&&... steps) &&
-        {
-            return test_and_execute(
-                std::move(*this).self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived const&&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto operator()(Nullable&& opt, Steps&&... steps) const&&
-        {
-            return test_and_execute(
-                std::move(*this).self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_value(Nullable&& opt, Steps&&... steps) &
-        {
-            return Derived::on_value_impl(
-                self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived const&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&
-        {
-            return Derived::on_value_impl(
-                self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived&&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_value(Nullable&& opt, Steps&&... steps) &&
-        {
-            return Derived::on_value_impl(
-                std::move(*this).self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived const&&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&&
-        {
-            return Derived::on_value_impl(
-                std::move(*this).self(),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_null(Steps&&... steps) &
-        {
-            return Derived::template on_null_impl<Nullable>(
-                self(),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived const&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_null(Steps&&... steps) const&
-        {
-            return Derived::template on_null_impl<Nullable>(
-                self(),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived&&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_null(Steps&&... steps) &&
-        {
-            return Derived::template on_null_impl<Nullable>(
-                std::move(*this).self(),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <applicable_on<Derived const&&> Nullable, typename... Steps>
-        [[nodiscard]]
-        constexpr auto on_null(Steps&&... steps) const&&
-        {
-            return Derived::template on_null_impl<Nullable>(
-                std::move(*this).self(),
-                std::forward<Steps>(steps)...);
-        }
-
-    protected:
-        [[nodiscard]]
-        constexpr ComposableAlgorithmBase() = default;
-
-    private:
-        static consteval void check() noexcept
-        {
-            static_assert(std::is_base_of_v<ComposableAlgorithmBase, Derived>, "Derived must inherit from ComposableAlgorithmBase");
-        }
-
-        [[nodiscard]]
-        constexpr Derived& self() & noexcept
-        {
-            check();
-            return static_cast<Derived&>(*this);
-        }
-
-        [[nodiscard]]
-        constexpr Derived const& self() const& noexcept
-        {
-            check();
-            return static_cast<Derived const&>(*this);
-        }
-
-        [[nodiscard]]
-        constexpr Derived&& self() && noexcept
-        {
-            check();
-            return static_cast<Derived&&>(*this);
-        }
-
-        [[nodiscard]]
-        constexpr Derived const&& self() const&& noexcept
-        {
-            check();
-            return static_cast<Derived const&&>(*this);
-        }
-
-        template <typename Self, typename Nullable, typename... Steps>
-        [[nodiscard]]
-        static constexpr auto test_and_execute(Self&& self, Nullable&& opt, Steps&&... steps)
-        {
-            if (detail::has_value(opt))
-            {
-                return Derived::on_value_impl(
-                    std::forward<Self>(self),
-                    std::forward<Nullable>(opt),
-                    std::forward<Steps>(steps)...);
-            }
-
-            return Derived::template on_null_impl<Nullable>(
-                std::forward<Self>(self),
-                std::forward<Steps>(steps)...);
-        }
     };
 }
 

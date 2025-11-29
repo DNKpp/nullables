@@ -18,10 +18,10 @@ TEST_CASE(
         action{};
 
     using Algorithm = gimo::detail::transform_t<decltype(action)>;
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm const&&>);
 
     SECTION("When input has a value, the action is invoked.")
     {

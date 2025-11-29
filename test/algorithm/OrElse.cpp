@@ -18,10 +18,10 @@ TEST_CASE(
         action{};
 
     using Algorithm = gimo::detail::or_else_t<decltype(action)>;
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<int>, Algorithm const&&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<int>, Algorithm&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<int>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<int>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<int>, Algorithm const&&>);
 
     SECTION("When input has no value, the action is invoked.")
     {
