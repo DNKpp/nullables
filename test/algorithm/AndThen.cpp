@@ -55,10 +55,10 @@ TEST_CASE(
         action{};
 
     using Algorithm = gimo::detail::and_then_t<decltype(action)>;
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm const&&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&&>);
 
     SECTION("When input has a value, the action is invoked.")
     {
@@ -150,10 +150,10 @@ TEST_CASE(
         std::optional<int>(float const&&) const>
         action{};
     using Algorithm = gimo::detail::and_then_t<decltype(std::cref(action))>;
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::applicable_on_impl<std::optional<float>, Algorithm const&&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&&>);
 
     Algorithm const andThen{std::cref(action)};
 

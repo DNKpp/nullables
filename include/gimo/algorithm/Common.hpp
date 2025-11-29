@@ -39,7 +39,7 @@ namespace gimo
     }
 
     template <typename Nullable, typename Algorithm>
-    concept applicable_on_impl = requires {
+    concept applicable_on = requires {
         requires detail::applicable_on<
             Nullable,
             typename std::remove_cvref_t<Algorithm>::traits_type,
@@ -60,7 +60,7 @@ namespace gimo
         {
         }
 
-        template <applicable_on_impl<BasicAlgorithm&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, Steps&&... steps) &
         {
@@ -70,7 +70,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm const&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm const&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, Steps&&... steps) const&
         {
@@ -80,7 +80,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm&&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm&&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, Steps&&... steps) &&
         {
@@ -90,7 +90,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm const&&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm const&&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto operator()(Nullable&& opt, Steps&&... steps) const&&
         {
@@ -100,7 +100,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) &
         {
@@ -110,7 +110,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm const&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm const&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&
         {
@@ -120,7 +120,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm&&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm&&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) &&
         {
@@ -130,7 +130,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm const&&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm const&&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&&
         {
@@ -140,7 +140,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) &
         {
@@ -149,7 +149,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm const&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm const&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) const&
         {
@@ -158,7 +158,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm&&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm&&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) &&
         {
@@ -167,7 +167,7 @@ namespace gimo
                 std::forward<Steps>(steps)...);
         }
 
-        template <applicable_on_impl<BasicAlgorithm const&&> Nullable, typename... Steps>
+        template <applicable_on<BasicAlgorithm const&&> Nullable, typename... Steps>
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) const&&
         {
