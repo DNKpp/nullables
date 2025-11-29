@@ -51,6 +51,11 @@ if (GIMO_CONFIGURE_DOXYGEN)
 	add_subdirectory("docs")
 endif()
 
+option(GIMO_ENABLE_AMALGAMATE_HEADERS "Enables the amalgamation target." OFF)
+if (GIMO_ENABLE_AMALGAMATE_HEADERS)
+	add_subdirectory("tools/amalgamate-headers")
+endif ()
+
 if(NOT CMAKE_SKIP_INSTALL_RULES)
   include(GimoInstallRules)
 endif()

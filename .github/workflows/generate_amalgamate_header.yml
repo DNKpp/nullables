@@ -1,0 +1,89 @@
+#          Copyright Dominic (DNKpp) Koepke 2025.
+# Distributed under the Boost Software License, Version 1.0.
+#    (See accompanying file LICENSE_1_0.txt or copy at
+#          https://www.boost.org/LICENSE_1_0.txt)
+
+name: generate amalgamate header
+env:
+  target-branch: amalgamate
+
+on:
+  push:
+    branches: [ main, development ]
+  pull_request:
+    branches: [ main, development ]
+
+jobs:
+  amalgamate-header:
+    runs-on: ubuntu-latest
+    permissions:
+      # Give the default GITHUB_TOKEN write permission to commit and push the changed files back to the repository.
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Configure
+        run: |
+          cmake \
+              -S . \
+              -B build \
+              --log-level=VERBOSE \
+              -DGIMO_ENABLE_AMALGAMATE_HEADERS=ON \
+              -DGIMO_BUILD_BENCHMARKS=OFF \
+              -DGIMO_BUILD_EXAMPLES=OFF \
+              -DGIMO_BUILD_TESTS=OFF
+
+      - name: Generate amalgamate header
+        run: |
+          cmake --build build --target gimo-amalgamate-headers
+          mv build/tools/amalgamate-headers/gimo-amalgamate.hpp .
+
+      - name: Upload header
+        uses: actions/upload-artifact@v5
+        with:
+          name: amalgamated-header
+          path: gimo-amalgamate.hpp
+          if-no-files-found: error
+
+      - name: Ensure ${{env.target-branch}} branch exists
+        shell: bash
+        run: |
+          BRANCH=${{env.target-branch}}
+          
+          # Does the branch already exist on the remote?
+          if git ls-remote --exit-code --quiet --heads origin "$BRANCH"; then
+            echo "Branch '$BRANCH' already exists — nothing to do."
+            exit 0
+          fi
+          
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git switch --orphan $BRANCH
+          git commit --allow-empty -m "Initialize $BRANCH branch"
+          git push origin $BRANCH
+
+      - name: Checkout ${{env.target-branch}} branch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{env.target-branch}}
+          path: temp
+          fetch-depth: 0
+
+      - name: Commit to ${{env.target-branch}} branch
+        shell: bash
+        run: |
+          BRANCH=${{env.target-branch}}
+          
+          mv gimo-amalgamate.hpp ./temp
+          cd temp
+          
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add .
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "Update amalgamate header"
+            git push origin "$BRANCH"
+          fi
