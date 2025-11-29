@@ -17,11 +17,11 @@ TEST_CASE(
         int(float) const&&>
         action{};
 
-    using Algorithm = gimo::detail::Transform<decltype(action)>;
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::detail::applicable_on<std::optional<float>, Algorithm const&&>);
+    using Algorithm = gimo::detail::transform_t<decltype(action)>;
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm&&>);
+    STATIC_REQUIRE(gimo::detail::applicable_on_impl<std::optional<float>, Algorithm const&&>);
 
     SECTION("When input has a value, the action is invoked.")
     {
@@ -30,7 +30,7 @@ TEST_CASE(
         {
             SCOPED_EXP action.expect_call(1337.f)
                 and finally::returns(42);
-            gimo::detail::Transform transform{std::move(action)};
+            Algorithm transform{std::move(action)};
             decltype(auto) result = transform(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -40,7 +40,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::as_const(action).expect_call(1337.f)
                 and finally::returns(42);
-            gimo::detail::Transform transform{std::move(action)};
+            Algorithm transform{std::move(action)};
             decltype(auto) result = std::as_const(transform)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -50,7 +50,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(action).expect_call(1337.f)
                 and finally::returns(42);
-            gimo::detail::Transform transform{std::move(action)};
+            Algorithm transform{std::move(action)};
             decltype(auto) result = std::move(transform)(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -60,7 +60,7 @@ TEST_CASE(
         {
             SCOPED_EXP std::move(std::as_const(action)).expect_call(1337.f)
                 and finally::returns(42);
-            gimo::detail::Transform transform{std::move(action)};
+            Algorithm transform{std::move(action)};
             decltype(auto) result = std::move(std::as_const(transform))(opt);
             STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
             CHECK(42 == result);
@@ -69,7 +69,7 @@ TEST_CASE(
 
     SECTION("When input is empty, action is not invoked.")
     {
-        gimo::detail::Transform transform{std::move(action)};
+        Algorithm transform{std::move(action)};
         constexpr std::optional<float> opt{};
 
         SECTION("When algorithm is used via lvalue-ref overload.")
