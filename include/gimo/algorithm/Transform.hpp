@@ -54,7 +54,7 @@ namespace gimo::detail::transform
 
     template <nullable Nullable, typename Action, typename Next, typename... Steps>
     [[nodiscard]]
-    constexpr auto on_null(Action&& action, Next&& next, Steps&&... steps)
+    constexpr auto on_null([[maybe_unused]] Action&& action, Next&& next, Steps&&... steps)
     {
         using Result = decltype(transform::on_null<Nullable>(std::forward<Action>(action)));
 
