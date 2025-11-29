@@ -1,7 +1,7 @@
-//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          https://www.boost.org/LICENSE_1_0.txt)
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
 
 #ifndef GIMO_PIPELINE_HPP
 #define GIMO_PIPELINE_HPP
@@ -110,33 +110,21 @@ namespace gimo
 
     namespace detail
     {
-        // clang-format off
         template <typename T>
-        struct is_pipeline : public std::false_type{};
+        struct is_pipeline
+            : public std::false_type
+        {
+        };
 
         template <typename... Steps>
-        struct is_pipeline<Pipeline<Steps...>> : public std::true_type{};
-
-        template <typename... Steps>
-        struct is_pipeline<Pipeline<Steps...> const> : public std::true_type{};
-
-        template <typename... Steps>
-        struct is_pipeline<Pipeline<Steps...>&> : public std::true_type{};
-
-        template <typename... Steps>
-        struct is_pipeline<Pipeline<Steps...> const&> : public std::true_type{};
-
-        template <typename... Steps>
-        struct is_pipeline<Pipeline<Steps...>&&> : public std::true_type{};
-
-        template <typename... Steps>
-        struct is_pipeline<Pipeline<Steps...> const&&> : public std::true_type{};
-
-        // clang-format on
+        struct is_pipeline<Pipeline<Steps...>>
+            : public std::true_type
+        {
+        };
     }
 
     template <typename T>
-    concept pipeline = detail::is_pipeline<T>::value;
+    concept pipeline = detail::is_pipeline<std::remove_cvref_t<T>>::value;
 
     template <nullable Nullable, pipeline Pipeline>
     [[nodiscard]]
