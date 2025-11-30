@@ -70,14 +70,14 @@ namespace gimo
         [[nodiscard]]
         friend constexpr auto operator|(Pipeline const& prefix, Pipeline<SuffixSteps...> suffix)
         {
-            return append(prefix, std::move(suffix).m_Steps);
+            return prefix.append(std::move(suffix));
         }
 
         template <typename... SuffixSteps>
         [[nodiscard]]
         friend constexpr auto operator|(Pipeline&& prefix, Pipeline<SuffixSteps...> suffix)
         {
-            return append(std::move(prefix), std::move(suffix).m_Steps);
+            return std::move(prefix).append(std::move(suffix));
         }
 
     private:
