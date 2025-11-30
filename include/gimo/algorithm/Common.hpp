@@ -186,7 +186,7 @@ namespace gimo
         }
 
     private:
-        [[maybe_unused]] Action m_Action;
+        [[no_unique_address]] Action m_Action;
     };
 }
 
