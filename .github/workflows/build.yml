@@ -22,7 +22,7 @@ jobs:
     container: ${{ matrix.config.container.image }}
     name: |
       ${{ matrix.config.prefix }} 
-      ${{ matrix.config.compiler_name }}-${{ matrix.config.compiler_version }} 
+      ${{ matrix.config.compiler.name }}-${{ matrix.config.compiler.version }} 
       ${{ matrix.config.suffix }} 
       (C++${{ matrix.cxx_standard }}, ${{ matrix.build_mode }}, ${{ matrix.architecture }})
 
@@ -38,8 +38,9 @@ jobs:
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:21"
-            compiler_name: "clang"
-            compiler_version: "21"
+            compiler:
+              name: "clang"
+              version: "21"
             asan: true
 
           - prefix: "Ubuntu"
@@ -47,9 +48,9 @@ jobs:
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:21"
-            compiler_name: "clang"
-            compiler_version: "21"
-            only_cpptrace: true
+            compiler:
+              name: "clang"
+              version: "21"
             libcxx: true
 
           - prefix: "Ubuntu"
@@ -57,177 +58,199 @@ jobs:
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:20"
-            compiler_name: "clang"
-            compiler_version: "20"
-            only_cpptrace: true
+            compiler:
+              name: "clang"
+              version: "20"
             libcxx: true
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:20"
-            compiler_name: "clang"
-            compiler_version: "20"
+            compiler:
+              name: "clang"
+              version: "20"
 
           - prefix: "Ubuntu"
             suffix: "/libc++"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:19"
-            compiler_name: "clang"
-            compiler_version: "19"
-            only_cpptrace: true
+            compiler:
+              name: "clang"
+              version: "19"
             libcxx: true
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:19"
-            compiler_name: "clang"
-            compiler_version: "19"
+            compiler:
+              name: "clang"
+              version: "19"
 
           - prefix: "Ubuntu"
             suffix: "/libc++"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:18"
-            compiler_name: "clang"
-            compiler_version: "18"
+            compiler:
+              name: "clang"
+              version: "18"
             libcxx: true
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:18"
-            compiler_name: "clang"
-            compiler_version: "18"
+            compiler:
+              name: "clang"
+              version: "18"
 
           - prefix: "Ubuntu"
             suffix: "/libc++"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:17"
-            compiler_name: "clang"
-            compiler_version: "17"
+            compiler:
+              name: "clang"
+              version: "17"
             libcxx: true
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:17"
-            compiler_name: "clang"
-            compiler_version: "17"
+            compiler:
+              name: "clang"
+              version: "17"
 
           - prefix: "Ubuntu"
             suffix: "/libc++"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:16"
-            compiler_name: "clang"
-            compiler_version: "16"
+            compiler:
+              name: "clang"
+              version: "16"
             libcxx: true
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/clang:16"
-            compiler_name: "clang"
-            compiler_version: "16"
+            compiler:
+              name: "clang"
+              version: "16"
 
           # gcc
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/gcc:15"
-            compiler_name: "gcc"
-            compiler_version: "15"
+            compiler:
+              name: "gcc"
+              version: "15"
             asan: true
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/gcc:14"
-            compiler_name: "gcc"
-            compiler_version: "14"
+            compiler:
+              name: "gcc"
+              version: "14"
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/gcc:13"
-            compiler_name: "gcc"
-            compiler_version: "13"
+            compiler:
+              name: "gcc"
+              version: "13"
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/gcc:12"
-            compiler_name: "gcc"
-            compiler_version: "12"
+            compiler:
+              name: "gcc"
+              version: "12"
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/gcc:11"
-            compiler_name: "gcc"
-            compiler_version: "11"
+            compiler:
+              name: "gcc"
+              version: "11"
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/gcc:10"
-            compiler_name: "gcc"
-            compiler_version: "10"
+            compiler:
+              name: "gcc"
+              version: "10"
 
           # This is the latest debian-11 (aka `bullseye`) version
           - prefix: "Debian-11"
             os: "ubuntu-latest"
             container:
               image: "ghcr.io/dnkpp/debian:bullseye-slim"
-            compiler_name: "gcc"
-            compiler_version: "10.2"
+            compiler:
+              name: "gcc"
+              version: "10.2"
 
           # msvc
           - prefix: "Windows 2022"
             os: "windows-2022"
-            compiler_name: "msvc"
-            compiler_version: "v143"
+            compiler:
+              name: "msvc"
+              version: "v143"
             cmake_generator: "Visual Studio 17 2022"
 
           - prefix: "Windows 2022"
             os: "windows-2022"
-            compiler_name: "msvc"
-            compiler_version: "ClangCl"
+            compiler:
+              name: "msvc"
+              version: "ClangCl"
             cmake_generator: "Visual Studio 17 2022"
 
           # macOS
           - prefix: "macOS"
             os: "macos-latest"
-            compiler_name: "AppleClang"
-            compiler_version: "18"
+            compiler:
+              name: "AppleClang"
+              version: "18"
             ldflags_workaround: "-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib/unwind -lunwind"
 
           - prefix: "macOS"
             os: "macos-latest"
-            compiler_name: "AppleClang"
-            compiler_version: "17"
+            compiler:
+              name: "AppleClang"
+              version: "17"
             ldflags_workaround: "-L/opt/homebrew/opt/llvm@17/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm@17/lib/c++"
 
           - prefix: "macOS"
             os: "macos-latest"
-            compiler_name: "AppleClang"
-            compiler_version: "16"
+            compiler:
+              name: "AppleClang"
+              version: "16"
             ldflags_workaround: "-L/opt/homebrew/opt/llvm@16/lib/c++ -Wl,-rpath,/opt/homebrew/opt/llvm@16/lib/c++"
 
         exclude:
           # gcc-10 doesn't know C++-23
           - cxx_standard: 23
             config:
-              compiler_name: "gcc"
-              compiler_version: "10"
+              compiler:
+                name: "gcc"
+                version: "10"
           - cxx_standard: 23
             config:
-              compiler_name: "gcc"
-              compiler_version: "10.2"
+              compiler:
+                name: "gcc"
+                version: "10.2"
           # It seems macOS doesn't support 32bit builds.
           - architecture: "32bit"
             config:
@@ -236,6 +259,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+
+      - name: Restore cached dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: build/_deps
+          key: deps-${{ matrix.architecture }}-${{ matrix.config.compiler.name }}-${{ matrix.config.compiler.version }}-${{ matrix.config.suffix }}
 
       #############
       #
@@ -263,7 +292,7 @@ jobs:
         shell: bash
         run: |
           env brew install ninja llvm
-          LLVM_NAME=llvm@${{ matrix.config.compiler_version }}
+          LLVM_NAME=llvm@${{ matrix.config.compiler.version }}
           env brew install $LLVM_NAME
           LLVM_PATH="$(brew --prefix $LLVM_NAME)"
           echo "CC=$(echo $LLVM_PATH/bin/clang)" >> $GITHUB_ENV
@@ -281,7 +310,7 @@ jobs:
           echo "CMAKE_BASE_OPTIONS=$(echo ${CMAKE_BASE_OPTIONS} -DCMAKE_BUILD_TYPE=${{ matrix.build_mode }})" >> $GITHUB_ENV
 
       - name: Setup msvc
-        if: ${{ matrix.config.compiler_name  == 'msvc' }}
+        if: ${{ matrix.config.compiler.name  == 'msvc' }}
         shell: bash
         run: |
           # translate architecture to appropriate platform config
@@ -293,13 +322,13 @@ jobs:
           
           echo "CMAKE_BASE_OPTIONS=$(echo ${CMAKE_BASE_OPTIONS} \
                                             -G\"${{ matrix.config.cmake_generator }}\" \
-                                            -T\"${{ matrix.config.compiler_version }}\" \
+                                            -T\"${{ matrix.config.compiler.version }}\" \
                                             -A\"${PLATFORM}\" \
                                       )" >> $GITHUB_ENV
           echo "CMAKE_BUILD_EXTRA=$(echo ${CMAKE_BUILD_EXTRA} --config ${{ matrix.build_mode }})" >> $GITHUB_ENV
 
       - name: Clang libc++ setup
-        if: ${{ matrix.config.compiler_name == 'clang' && matrix.config.libcxx == true }}
+        if: ${{ matrix.config.compiler.name == 'clang' && matrix.config.libcxx == true }}
         shell: bash
         run: |
           echo "CXXFLAGS=$(echo ${CXXFLAGS} -stdlib=libc++)" >> $GITHUB_ENV
@@ -324,15 +353,15 @@ jobs:
         # I don't know, how to install them side by side.
         run: |
           apt-get remove -y \
-            libc++-${{ matrix.config.compiler_version }}-dev \
-            libc++abi-${{ matrix.config.compiler_version }}-dev
+            libc++-${{ matrix.config.compiler.version }}-dev \
+            libc++abi-${{ matrix.config.compiler.version }}-dev
           apt-get autoremove -y
           
           dpkg --add-architecture i386
           apt-get update -y
           apt-get install -y \
-            libc++-${{ matrix.config.compiler_version }}-dev:i386 \
-            libc++abi-${{ matrix.config.compiler_version }}-dev:i386
+            libc++-${{ matrix.config.compiler.version }}-dev:i386 \
+            libc++abi-${{ matrix.config.compiler.version }}-dev:i386
 
       - name: Enable Address and Undefined Sanitizer
         if: ${{ matrix.config.asan && matrix.build_mode == 'Debug' }}
@@ -378,3 +407,14 @@ jobs:
           ctest --test-dir build \
               -C ${{ matrix.build_mode }} \
               -j5
+      #
+      # End Build
+      #
+      #############
+
+      - name: Save Dependencies
+        if: ${{ matrix.build_mode == 'Release' }}
+        uses: actions/cache/save@v4
+        with:
+          path: build/_deps
+          key: deps-${{ matrix.architecture }}-${{ matrix.config.compiler.name }}-${{ matrix.config.compiler.version }}-${{ matrix.config.suffix }}
