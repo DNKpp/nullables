@@ -10,8 +10,6 @@ env:
 on:
   push:
     branches: [ main, development ]
-  pull_request:
-    branches: [ main, development ]
 
 jobs:
   amalgamate-header:
@@ -71,6 +69,7 @@ jobs:
           fetch-depth: 0
 
       - name: Commit to ${{env.target-branch}} branch
+        if: ${{ github.ref == 'refs/heads/main' }}
         shell: bash
         run: |
           BRANCH=${{env.target-branch}}
