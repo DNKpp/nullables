@@ -4,7 +4,7 @@
 #          https://www.boost.org/LICENSE_1_0.txt)
 
 target_sources(${TARGET_NAME} PRIVATE
-    "Common.cpp"
+    "BasicAlgorithm.cpp"
     "AndThen.cpp"
     "OrElse.cpp"
     "Transform.cpp"

@@ -6,7 +6,7 @@
 // We disable assertions here on purpose so that they do not interfere with our expectations.
 #define GIMO_ASSERT(condition, msg, ...) (void(0))
 
-#include "gimo/algorithm/Common.hpp"
+#include "gimo/algorithm/BasicAlgorithm.hpp"
 #include "gimo_ext/std_optional.hpp"
 
 using namespace gimo;
