@@ -1,4 +1,4 @@
-//           Copyright Dominic (DNKpp) Koepke 2025
+//           Copyright Dominic (DNKpp) Koepke 2025.
 //  Distributed under the Boost Software License, Version 1.0.
 //     (See accompanying file LICENSE_1_0.txt or copy at
 //           https://www.boost.org/LICENSE_1_0.txt)
@@ -153,7 +153,6 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) &
         {
-            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
             return Traits::template on_null<Nullable>(
                 m_Action,
                 std::forward<Steps>(steps)...);
@@ -163,8 +162,6 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) const&
         {
-            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
-
             return Traits::template on_null<Nullable>(
                 m_Action,
                 std::forward<Steps>(steps)...);
@@ -174,8 +171,6 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) &&
         {
-            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
-
             return Traits::template on_null<Nullable>(
                 std::move(m_Action),
                 std::forward<Steps>(steps)...);
@@ -185,8 +180,6 @@ namespace gimo
         [[nodiscard]]
         constexpr auto on_null(Steps&&... steps) const&&
         {
-            GIMO_ASSERT(!detail::has_value(opt), "Nullable must not contain a value.", opt);
-
             return Traits::template on_null<Nullable>(
                 std::move(m_Action),
                 std::forward<Steps>(steps)...);
