@@ -260,12 +260,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Restore cached dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: build/_deps
-          key: deps-${{ matrix.architecture }}-${{ matrix.config.compiler.name }}-${{ matrix.config.compiler.version }}-${{ matrix.config.suffix }}
-
       #############
       #
       # Start Setup
@@ -411,10 +405,3 @@ jobs:
       # End Build
       #
       #############
-
-      - name: Save Dependencies
-        if: ${{ matrix.build_mode == 'Release' }}
-        uses: actions/cache/save@v4
-        with:
-          path: build/_deps
-          key: deps-${{ matrix.architecture }}-${{ matrix.config.compiler.name }}-${{ matrix.config.compiler.version }}-${{ matrix.config.suffix }}
