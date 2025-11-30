@@ -247,6 +247,8 @@ jobs:
           CMAKE_OPTIONS="--log-level=DEBUG \
                           -D CMAKE_VERBOSE_MAKEFILE=ON \
                           -D GIMO_CONFIG_CXX_STANDARD=${{ matrix.cxx_standard }} \
+                          -D CMAKE_SKIP_INSTALL_RULES=ON \
+                          -D GIMO_ENABLE_INSTALL_RULES=OFF \
                           -D GIMO_BUILD_TESTS=ON \
                           -D GIMO_BUILD_BENCHMARKS=OFF"
           
