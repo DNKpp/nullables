@@ -32,6 +32,9 @@ target_link_libraries(${TARGET_NAME} PRIVATE
     mimicpp::mimicpp
 )
 
+target_compile_definitions(${TARGET_NAME} PRIVATE
+    CATCH_CONFIG_FALLBACK_STRINGIFIER=mimicpp::print
+)
 target_precompile_headers(${TARGET_NAME} PRIVATE
     "pch.hpp"
 )
