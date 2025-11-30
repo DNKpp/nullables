@@ -1,4 +1,4 @@
-//           Copyright Dominic (DNKpp) Koepke 2025
+//           Copyright Dominic (DNKpp) Koepke 2025.
 //  Distributed under the Boost Software License, Version 1.0.
 //     (See accompanying file LICENSE_1_0.txt or copy at
 //           https://www.boost.org/LICENSE_1_0.txt)
@@ -350,7 +350,7 @@ namespace gimo
 /*** End of inlined file: Pipeline.hpp ***/
 
 
-/*** Start of inlined file: Common.hpp ***/
+/*** Start of inlined file: BasicAlgorithm.hpp ***/
 //           Copyright Dominic (DNKpp) Koepke 2025.
 //  Distributed under the Boost Software License, Version 1.0.
 //     (See accompanying file LICENSE_1_0.txt or copy at
@@ -536,17 +536,17 @@ namespace gimo
         }
 
     private:
-        [[maybe_unused]] Action m_Action;
+        [[no_unique_address]] Action m_Action;
     };
 }
 
 #endif
 
-/*** End of inlined file: Common.hpp ***/
+/*** End of inlined file: BasicAlgorithm.hpp ***/
 
 
 /*** Start of inlined file: AndThen.hpp ***/
-//           Copyright Dominic (DNKpp) Koepke 2025
+//           Copyright Dominic (DNKpp) Koepke 2025.
 //  Distributed under the Boost Software License, Version 1.0.
 //     (See accompanying file LICENSE_1_0.txt or copy at
 //           https://www.boost.org/LICENSE_1_0.txt)
@@ -661,7 +661,7 @@ namespace gimo
 
 
 /*** Start of inlined file: OrElse.hpp ***/
-//           Copyright Dominic (DNKpp) Koepke 2025
+//           Copyright Dominic (DNKpp) Koepke 2025.
 //  Distributed under the Boost Software License, Version 1.0.
 //     (See accompanying file LICENSE_1_0.txt or copy at
 //           https://www.boost.org/LICENSE_1_0.txt)
@@ -770,7 +770,7 @@ namespace gimo
 
 
 /*** Start of inlined file: Transform.hpp ***/
-//           Copyright Dominic (DNKpp) Koepke 2025
+//           Copyright Dominic (DNKpp) Koepke 2025.
 //  Distributed under the Boost Software License, Version 1.0.
 //     (See accompanying file LICENSE_1_0.txt or copy at
 //           https://www.boost.org/LICENSE_1_0.txt)
