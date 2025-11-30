@@ -29,8 +29,9 @@ target_include_directories(gimo INTERFACE
 	"$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
+set(GIMO_CONFIG_CXX_STANDARD 20 CACHE STRING "Which c++ standard to use.")
 target_compile_features(gimo INTERFACE
-	cxx_std_20
+	cxx_std_${GIMO_CONFIG_CXX_STANDARD}
 )
 
 string(COMPARE EQUAL "${gimo_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" IS_TOP_LEVEL_PROJECT)
