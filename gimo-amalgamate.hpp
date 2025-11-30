@@ -1,0 +1,885 @@
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_HPP
+#define GIMO_HPP
+
+
+/*** Start of inlined file: Version.hpp ***/
+//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_VERSION_HPP
+#define GIMO_VERSION_HPP
+
+#pragma once
+
+#define GIMO_VERSION_MAJOR 0
+#define GIMO_VERSION_MINOR 1
+#define GIMO_VERSION_PATCH 0
+
+#endif
+
+/*** End of inlined file: Version.hpp ***/
+
+
+/*** Start of inlined file: Config.hpp ***/
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_CONFIG_HPP
+#define GIMO_CONFIG_HPP
+
+#ifndef GIMO_ASSERT
+    #include <cassert>
+    #define GIMO_ASSERT(condition, msg, ...) assert((condition) && msg)
+#endif
+
+#endif
+
+/*** End of inlined file: Config.hpp ***/
+
+
+/*** Start of inlined file: Common.hpp ***/
+//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
+// Distributed under the Boost Software License, Version 1.0.
+//    (See accompanying file LICENSE_1_0.txt or copy at
+//          https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_COMMON_HPP
+#define GIMO_COMMON_HPP
+
+#pragma once
+
+#include <type_traits>
+#include <utility>
+
+namespace gimo::detail
+{
+    template <typename T, typename U>
+    struct const_ref_like
+    {
+        using type = std::conditional_t<
+            std::is_const_v<std::remove_reference_t<T>>,
+            std::remove_reference_t<U> const&&,
+            std::remove_reference_t<U>&&>;
+    };
+
+    template <typename T, typename U>
+    struct const_ref_like<T&, U>
+    {
+        using type = std::conditional_t<
+            std::is_const_v<std::remove_reference_t<T>>,
+            std::remove_reference_t<U> const&,
+            std::remove_reference_t<U>&>;
+    };
+
+    template <typename T, typename U>
+    using const_ref_like_t = const_ref_like<T, U>::type;
+
+    template <typename T, typename U>
+    [[nodiscard]]
+    constexpr auto&& forward_like(U&& x) noexcept
+    {
+        return static_cast<const_ref_like_t<T, U>>(x);
+    }
+
+    template <typename T>
+    concept referencable = std::is_reference_v<T&>;
+
+    template <typename B>
+    concept boolean_testable =
+        std::convertible_to<B, bool>
+        && requires(B&& b) {
+               { !std::forward<B>(b) } -> std::convertible_to<bool>;
+           };
+
+    template <typename T, typename U>
+    concept weakly_equality_comparable_with =
+        requires(T const& t, U const& u) {
+            { t == u } -> boolean_testable;
+            { t != u } -> boolean_testable;
+            { u == t } -> boolean_testable;
+            { u != t } -> boolean_testable;
+        };
+}
+
+namespace gimo
+{
+    template <typename Nullable>
+    struct traits;
+
+    namespace detail
+    {
+        template <typename T, typename U, typename C = std::common_reference_t<T const&, U const&>>
+        concept regular_relationship_impl =
+            std::same_as<
+                std::common_reference_t<T const&, U const&>,
+                std::common_reference_t<U const&, T const&>>
+            && (std::convertible_to<T const&, C const&>
+                || std::convertible_to<T, C const&>)
+            && (std::convertible_to<U const&, C const&>
+                || std::convertible_to<U, C const&>);
+
+        template <typename Lhs, typename Rhs>
+        concept weakly_assignable_from =
+            std::is_lvalue_reference_v<Lhs>
+            && requires(Lhs lhs, Rhs&& rhs) {
+                   { lhs = std::forward<Rhs>(rhs) } -> std::same_as<Lhs>;
+               };
+    }
+
+    template <typename T, typename U>
+    concept regular_relationship =
+        detail::regular_relationship_impl<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
+
+    template <typename Null, typename Nullable>
+    concept null_for = regular_relationship<Nullable, Null>
+                    && detail::weakly_equality_comparable_with<Null, Nullable>
+                    && std::constructible_from<Nullable, Null const&>
+                    && detail::weakly_assignable_from<Nullable&, Null const&>;
+
+    template <typename T>
+    concept dereferencable = requires(T closure) {
+        { *std::forward<T>(closure) } -> detail::referencable;
+    };
+
+    template <dereferencable T>
+    constexpr decltype(auto) value(T&& nullable)
+    {
+        return *std::forward<T>(nullable);
+    }
+
+    template <typename T>
+    concept nullable = requires(T&& obj) {
+        requires null_for<decltype(traits<std::remove_cvref_t<T>>::null), std::remove_cvref_t<T>>;
+        { value(std::forward<T>(obj)) } -> detail::referencable;
+    };
+
+    template <typename T, typename Nullable>
+    concept rebindable_to = nullable<Nullable>
+                         && requires(T&& obj) {
+                                {
+                                    typename traits<std::remove_cvref_t<Nullable>>::template rebind_value<std::remove_cvref_t<T>>{
+                                        std::forward<T>(obj)}
+                                } -> nullable;
+                            };
+    template <nullable Nullable>
+    using reference_type_t = decltype(value(std::declval<Nullable&&>()));
+
+    template <nullable Nullable>
+    inline constexpr auto null_v{traits<std::remove_cvref_t<Nullable>>::null};
+
+    template <nullable Nullable, typename Value>
+    using rebind_value_t = typename traits<std::remove_cvref_t<Nullable>>::template rebind_value<Value>;
+
+    namespace detail
+    {
+        template <nullable Nullable>
+        [[nodiscard]]
+        constexpr auto construct_empty()
+        {
+            return Nullable{null_v<Nullable>};
+        }
+
+        template <typename Nullable>
+        [[nodiscard]]
+        constexpr bool has_value(Nullable const& target)
+        {
+            return target != null_v<Nullable>;
+        }
+
+        template <typename Nullable, typename Value>
+        [[nodiscard]]
+        constexpr auto rebind_value(Value&& value)
+        {
+            return rebind_value_t<Nullable, Value>{std::forward<Value>(value)};
+        }
+    }
+}
+
+#endif
+
+/*** End of inlined file: Common.hpp ***/
+
+
+/*** Start of inlined file: Pipeline.hpp ***/
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_PIPELINE_HPP
+#define GIMO_PIPELINE_HPP
+
+#pragma once
+
+#include <functional>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
+namespace gimo
+{
+    template <typename... Steps>
+    class Pipeline
+    {
+        template <typename... Others>
+        friend class Pipeline;
+
+    public:
+        [[nodiscard]]
+        explicit constexpr Pipeline(std::tuple<Steps...> steps)
+            : m_Steps{std::move(steps)}
+        {
+        }
+
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) &
+        {
+            return apply(*this, std::forward<Nullable>(opt));
+        }
+
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) const&
+        {
+            return apply(*this, std::forward<Nullable>(opt));
+        }
+
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) &&
+        {
+            return apply(std::move(*this), std::forward<Nullable>(opt));
+        }
+
+        template <nullable Nullable>
+        constexpr auto apply(Nullable&& opt) const&&
+        {
+            return apply(std::move(*this), std::forward<Nullable>(opt));
+        }
+
+        template <typename... SuffixSteps>
+        constexpr auto append(Pipeline<SuffixSteps...> suffix) const&
+        {
+            return append(*this, std::move(suffix.m_Steps));
+        }
+
+        template <typename... SuffixSteps>
+        constexpr auto append(Pipeline<SuffixSteps...> suffix) &&
+        {
+            return append(std::move(*this), std::move(suffix.m_Steps));
+        }
+
+        template <typename... SuffixSteps>
+        [[nodiscard]]
+        friend constexpr auto operator|(Pipeline const& prefix, Pipeline<SuffixSteps...> suffix)
+        {
+            return append(prefix, std::move(suffix).m_Steps);
+        }
+
+        template <typename... SuffixSteps>
+        [[nodiscard]]
+        friend constexpr auto operator|(Pipeline&& prefix, Pipeline<SuffixSteps...> suffix)
+        {
+            return append(std::move(prefix), std::move(suffix).m_Steps);
+        }
+
+    private:
+        std::tuple<Steps...> m_Steps{};
+
+        template <typename Self, typename Nullable>
+        [[nodiscard]]
+        static constexpr auto apply(Self&& self, Nullable&& opt)
+        {
+            return std::apply(
+                [&]<typename First, typename... Others>(First&& first, Others&&... steps) {
+                    return std::invoke(
+                        std::forward<First>(first),
+                        std::forward<Nullable>(opt),
+                        std::forward<Others>(steps)...);
+                },
+                std::forward<Self>(self).m_Steps);
+        }
+
+        template <typename Self, typename... SuffixSteps>
+        [[nodiscard]]
+        static constexpr auto append(Self&& self, std::tuple<SuffixSteps...>&& suffixSteps)
+        {
+            using Appended = Pipeline<Steps..., SuffixSteps...>;
+
+            return Appended{
+                std::tuple_cat(std::forward<Self>(self).m_Steps, std::move(suffixSteps))};
+        }
+    };
+
+    namespace detail
+    {
+        template <typename T>
+        struct is_pipeline
+            : public std::false_type
+        {
+        };
+
+        template <typename... Steps>
+        struct is_pipeline<Pipeline<Steps...>>
+            : public std::true_type
+        {
+        };
+    }
+
+    template <typename T>
+    concept pipeline = detail::is_pipeline<std::remove_cvref_t<T>>::value;
+
+    template <nullable Nullable, pipeline Pipeline>
+    [[nodiscard]]
+    constexpr auto apply(Nullable&& opt, Pipeline&& steps)
+    {
+        return std::forward<Pipeline>(steps).apply(std::forward<Nullable>(opt));
+    }
+}
+
+#endif
+
+/*** End of inlined file: Pipeline.hpp ***/
+
+
+/*** Start of inlined file: Common.hpp ***/
+//           Copyright Dominic (DNKpp) Koepke 2025.
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_ALGORITHM_COMMON_HPP
+#define GIMO_ALGORITHM_COMMON_HPP
+
+#pragma once
+
+#include <type_traits>
+#include <utility>
+
+namespace gimo
+{
+    namespace detail
+    {
+        template <typename Traits, typename Action, typename Nullable, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto test_and_execute(Action&& action, Nullable&& opt, Steps&&... steps)
+        {
+            if (detail::has_value(opt))
+            {
+                return Traits::on_value(
+                    std::forward<Action>(action),
+                    std::forward<Nullable>(opt),
+                    std::forward<Steps>(steps)...);
+            }
+
+            return Traits::template on_null<Nullable>(
+                std::forward<Action>(action),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <typename Nullable, typename Traits, typename Action>
+        concept applicable_on = Traits::template is_applicable_on<Nullable, Action>;
+    }
+
+    template <typename Nullable, typename Algorithm>
+    concept applicable_on = requires {
+        requires detail::applicable_on<
+            Nullable,
+            typename std::remove_cvref_t<Algorithm>::traits_type,
+            detail::const_ref_like_t<Algorithm, typename std::remove_cvref_t<Algorithm>::action_type>>;
+    };
+
+    template <typename Traits, typename Action>
+    class BasicAlgorithm
+    {
+    public:
+        using traits_type = Traits;
+        using action_type = Action;
+
+        template <typename... Args>
+            requires std::constructible_from<Action, Args&&...>
+        [[nodiscard]] explicit constexpr BasicAlgorithm(Args&&... args) noexcept(std::is_nothrow_constructible_v<Action, Args&&...>)
+            : m_Action{std::forward<Args>(args)...}
+        {
+        }
+
+        template <applicable_on<BasicAlgorithm&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto operator()(Nullable&& opt, Steps&&... steps) &
+        {
+            return detail::test_and_execute<Traits>(
+                m_Action,
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm const&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto operator()(Nullable&& opt, Steps&&... steps) const&
+        {
+            return detail::test_and_execute<Traits>(
+                m_Action,
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm&&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto operator()(Nullable&& opt, Steps&&... steps) &&
+        {
+            return detail::test_and_execute<Traits>(
+                std::move(m_Action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm const&&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto operator()(Nullable&& opt, Steps&&... steps) const&&
+        {
+            return detail::test_and_execute<Traits>(
+                std::move(m_Action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_value(Nullable&& opt, Steps&&... steps) &
+        {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
+            return Traits::on_value(
+                m_Action,
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm const&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&
+        {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
+            return Traits::on_value(
+                m_Action,
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm&&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_value(Nullable&& opt, Steps&&... steps) &&
+        {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
+            return Traits::on_value(
+                std::move(m_Action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm const&&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_value(Nullable&& opt, Steps&&... steps) const&&
+        {
+            GIMO_ASSERT(detail::has_value(opt), "Nullable must contain a value.", opt);
+
+            return Traits::on_value(
+                std::move(m_Action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_null(Steps&&... steps) &
+        {
+            return Traits::template on_null<Nullable>(
+                m_Action,
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm const&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_null(Steps&&... steps) const&
+        {
+            return Traits::template on_null<Nullable>(
+                m_Action,
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm&&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_null(Steps&&... steps) &&
+        {
+            return Traits::template on_null<Nullable>(
+                std::move(m_Action),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <applicable_on<BasicAlgorithm const&&> Nullable, typename... Steps>
+        [[nodiscard]]
+        constexpr auto on_null(Steps&&... steps) const&&
+        {
+            return Traits::template on_null<Nullable>(
+                std::move(m_Action),
+                std::forward<Steps>(steps)...);
+        }
+
+    private:
+        [[maybe_unused]] Action m_Action;
+    };
+}
+
+#endif
+
+/*** End of inlined file: Common.hpp ***/
+
+
+/*** Start of inlined file: AndThen.hpp ***/
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_ALGORITHM_AND_THEN_HPP
+#define GIMO_ALGORITHM_AND_THEN_HPP
+
+#pragma once
+
+#include <concepts>
+#include <functional>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
+namespace gimo::detail::and_then
+{
+    template <typename Action, nullable Nullable>
+    [[nodiscard]]
+    constexpr auto on_value(Action&& action, Nullable&& opt)
+    {
+        return std::invoke(
+            std::forward<Action>(action),
+            gimo::value(std::forward<Nullable>(opt)));
+    }
+
+    template <typename Action, nullable Nullable, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_value(
+        Action&& action,
+        Nullable&& opt,
+        Next&& next,
+        Steps&&... steps)
+    {
+        return std::invoke(
+            std::forward<Next>(next),
+            and_then::on_value(std::forward<Action>(action), std::forward<Nullable>(opt)),
+            std::forward<Steps>(steps)...);
+    }
+
+    template <nullable Nullable, typename Action>
+    [[nodiscard]]
+    constexpr auto on_null([[maybe_unused]] Action&& action)
+    {
+        using Result = std::invoke_result_t<Action, reference_type_t<Nullable>>;
+
+        return detail::construct_empty<Result>();
+    }
+
+    template <nullable Nullable, typename Action, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_null([[maybe_unused]] Action&& action, Next&& next, Steps&&... steps)
+    {
+        using Result = decltype(on_null<Nullable>(std::forward<Action>(action)));
+
+        return std::forward<Next>(next).template on_null<Result>(
+            std::forward<Steps>(steps)...);
+    }
+
+    struct traits
+    {
+        template <nullable Nullable, typename Action>
+        static constexpr bool is_applicable_on = requires {
+            requires nullable<
+                std::invoke_result_t<
+                    Action,
+                    reference_type_t<Nullable>>>;
+        };
+
+        template <typename Action, nullable Nullable, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_value(Action&& action, Nullable&& opt, Steps&&... steps)
+        {
+            return and_then::on_value(
+                std::forward<Action>(action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <nullable Nullable, typename Action, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_null(Action&& action, Steps&&... steps)
+        {
+            return and_then::on_null<Nullable>(
+                std::forward<Action>(action),
+                std::forward<Steps>(steps)...);
+        }
+    };
+}
+
+namespace gimo
+{
+    namespace detail
+    {
+        template <typename Action>
+        using and_then_t = BasicAlgorithm<and_then::traits, Action>;
+    }
+
+    template <typename Action>
+    [[nodiscard]]
+    constexpr auto and_then(Action&& action)
+    {
+        using Algorithm = detail::and_then_t<Action>;
+
+        return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
+    }
+}
+
+#endif
+
+/*** End of inlined file: AndThen.hpp ***/
+
+
+/*** Start of inlined file: OrElse.hpp ***/
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_ALGORITHM_OR_ELSE_HPP
+#define GIMO_ALGORITHM_OR_ELSE_HPP
+
+#pragma once
+
+#include <concepts>
+#include <functional>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
+namespace gimo::detail::or_else
+{
+    template <typename Action, nullable Nullable>
+    [[nodiscard]]
+    constexpr auto on_value([[maybe_unused]] Action&& action, Nullable&& opt)
+    {
+        return std::forward<Nullable>(opt);
+    }
+
+    template <typename Action, nullable Nullable, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_value(
+        [[maybe_unused]] Action&& action,
+        Nullable&& opt,
+        Next&& next,
+        Steps&&... steps)
+    {
+        return std::forward<Next>(next).on_value(
+            std::forward<Nullable>(opt),
+            std::forward<Steps>(steps)...);
+    }
+
+    template <nullable Nullable, typename Action>
+    [[nodiscard]]
+    constexpr auto on_null(Action&& action)
+    {
+        return std::invoke(std::forward<Action>(action));
+    }
+
+    template <nullable Nullable, typename Action, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_null(Action&& action, Next&& next, Steps&&... steps)
+    {
+        return std::invoke(
+            std::forward<Next>(next),
+            or_else::on_null<Nullable>(std::forward<Action>(action)),
+            std::forward<Steps>(steps)...);
+    }
+
+    struct traits
+    {
+        template <nullable Nullable, typename Action>
+        static constexpr bool is_applicable_on = requires {
+            requires std::same_as<
+                std::remove_cvref_t<Nullable>,
+                std::remove_cvref_t<std::invoke_result_t<Action>>>;
+        };
+
+        template <typename Action, nullable Nullable, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_value(Action&& action, Nullable&& opt, Steps&&... steps)
+        {
+            return or_else::on_value(
+                std::forward<Action>(action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <nullable Nullable, typename Action, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_null(Action&& action, Steps&&... steps)
+        {
+            return or_else::on_null<Nullable>(
+                std::forward<Action>(action),
+                std::forward<Steps>(steps)...);
+        }
+    };
+}
+
+namespace gimo
+{
+    namespace detail
+    {
+        template <typename Action>
+        using or_else_t = BasicAlgorithm<or_else::traits, Action>;
+    }
+
+    template <typename Action>
+    [[nodiscard]]
+    constexpr auto or_else(Action&& action)
+    {
+        using Algorithm = detail::or_else_t<Action>;
+
+        return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
+    }
+}
+
+#endif
+
+/*** End of inlined file: OrElse.hpp ***/
+
+
+/*** Start of inlined file: Transform.hpp ***/
+//           Copyright Dominic (DNKpp) Koepke 2025
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
+
+#ifndef GIMO_ALGORITHM_AND_THEN_HPP
+#define GIMO_ALGORITHM_AND_THEN_HPP
+
+#pragma once
+
+#include <concepts>
+#include <functional>
+#include <tuple>
+#include <type_traits>
+#include <utility>
+
+namespace gimo::detail::transform
+{
+    template <typename Action, nullable Nullable>
+    [[nodiscard]]
+    constexpr auto on_value([[maybe_unused]] Action&& action, Nullable&& opt)
+    {
+        return detail::rebind_value<Nullable>(
+            std::invoke(
+                std::forward<Action>(action),
+                value(std::forward<Nullable>(opt))));
+    }
+
+    template <typename Action, nullable Nullable, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_value(
+        [[maybe_unused]] Action&& action,
+        Nullable&& opt,
+        Next&& next,
+        Steps&&... steps)
+    {
+        return std::forward<Next>(next).on_value(
+            transform::on_value(std::forward<Action>(action), std::forward<Nullable>(opt)),
+            std::forward<Steps>(steps)...);
+    }
+
+    template <nullable Nullable, typename Action>
+    [[nodiscard]]
+    constexpr auto on_null([[maybe_unused]] Action&& action)
+    {
+        using Result = std::invoke_result_t<Action, reference_type_t<Nullable>>;
+
+        return detail::construct_empty<rebind_value_t<Nullable, Result>>();
+    }
+
+    template <nullable Nullable, typename Action, typename Next, typename... Steps>
+    [[nodiscard]]
+    constexpr auto on_null([[maybe_unused]] Action&& action, Next&& next, Steps&&... steps)
+    {
+        using Result = decltype(transform::on_null<Nullable>(std::forward<Action>(action)));
+
+        return std::forward<Next>(next).template on_null<Result>(
+            std::forward<Steps>(steps)...);
+    }
+
+    struct traits
+    {
+        template <nullable Nullable, typename Action>
+        static constexpr bool is_applicable_on = requires {
+            requires rebindable_to<
+                std::invoke_result_t<Action, reference_type_t<Nullable>>,
+                std::remove_cvref_t<Nullable>>;
+        };
+
+        template <typename Action, nullable Nullable, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_value(Action&& action, Nullable&& opt, Steps&&... steps)
+        {
+            return transform::on_value(
+                std::forward<Action>(action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <nullable Nullable, typename Action, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_null(Action&& action, Steps&&... steps)
+        {
+            return transform::on_null<Nullable>(
+                std::forward<Action>(action),
+                std::forward<Steps>(steps)...);
+        }
+    };
+}
+
+namespace gimo
+{
+    namespace detail
+    {
+        template <typename Action>
+        using transform_t = BasicAlgorithm<transform::traits, Action>;
+    }
+
+    template <typename Action>
+    [[nodiscard]]
+    constexpr auto transform(Action&& action)
+    {
+        using Algorithm = detail::transform_t<Action>;
+
+        return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
+    }
+}
+
+#endif
+
+/*** End of inlined file: Transform.hpp ***/
+
+#endif
+
