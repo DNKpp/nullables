@@ -89,15 +89,16 @@ jobs:
               name: "clang"
               version: "19"
 
-          - prefix: "Ubuntu"
-            suffix: "/libc++"
-            os: "ubuntu-latest"
-            container:
-              image: "ghcr.io/dnkpp/clang:18"
-            compiler:
-              name: "clang"
-              version: "18"
-            libcxx: true
+          # mimic++ does not work with clang-18 and libc++, because the std::invocable concept is flawed.
+          #- prefix: "Ubuntu"
+          #  suffix: "/libc++"
+          #  os: "ubuntu-latest"
+          #  container:
+          #    image: "ghcr.io/dnkpp/clang:18"
+          #  compiler:
+          #    name: "clang"
+          #    version: "18"
+          #  libcxx: true
 
           - prefix: "Ubuntu"
             os: "ubuntu-latest"
@@ -217,13 +218,14 @@ jobs:
               version: "ClangCl"
             cmake_generator: "Visual Studio 17 2022"
 
+          # mimic++ does not work with clang-18 and libc++, because the std::invocable concept is flawed.
           # macOS
-          - prefix: "macOS"
-            os: "macos-latest"
-            compiler:
-              name: "AppleClang"
-              version: "18"
-            ldflags_workaround: "-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib/unwind -lunwind"
+          #- prefix: "macOS"
+          #  os: "macos-latest"
+          #  compiler:
+          #    name: "AppleClang"
+          #    version: "18"
+          #  ldflags_workaround: "-L/opt/homebrew/opt/llvm/lib/c++ -L/opt/homebrew/opt/llvm/lib/unwind -lunwind"
 
           - prefix: "macOS"
             os: "macos-latest"
