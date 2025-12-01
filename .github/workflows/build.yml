@@ -386,12 +386,13 @@ jobs:
 
       - name: Run Tests
         shell: bash
-        env:
-          CTEST_OUTPUT_ON_FAILURE: 1
         run: |
           ctest --test-dir build \
+              --output-on-failure \
+              --schedule-random \
+              --no-tests=error \
+              --parallel \
               -C ${{ matrix.build_mode }} \
-              -j5
       #
       # End Build
       #
