@@ -218,6 +218,12 @@ jobs:
               version: "ClangCl"
             cmake_generator: "Visual Studio 17 2022"
 
+          - prefix: "macOS"
+            os: "macos-latest"
+            compiler:
+              name: "AppleClang"
+              version: "19"
+
           # mimic++ does not work with clang-18 and libc++, because the std::invocable concept is flawed.
           # macOS
           #- prefix: "macOS"
