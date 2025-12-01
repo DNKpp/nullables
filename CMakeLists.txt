@@ -40,11 +40,13 @@ include(Gimo-HasStdOptionalMonadic)
 
 option(GIMO_BUILD_TESTS "Determines, whether the tests shall be built." ${IS_TOP_LEVEL_PROJECT})
 if (GIMO_BUILD_TESTS)
+	include(CTest)
 	add_subdirectory("test")
 endif()
 
 option(GIMO_BUILD_BENCHMARKS "Determines, whether the benchmarks shall be built." ${IS_TOP_LEVEL_PROJECT})
 if (GIMO_BUILD_BENCHMARKS AND GIMO_HAS_STD_OPTIONAL_MONADIC)
+	include(CTest)
 	add_subdirectory("benchmarks")
 endif()
 
