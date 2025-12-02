@@ -1,10 +1,14 @@
-//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          https://www.boost.org/LICENSE_1_0.txt)
+//           Copyright Dominic (DNKpp) Koepke 2025.
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
 
 #include "gimo/algorithm/Transform.hpp"
 #include "gimo_ext/std_optional.hpp"
+
+#include "TestCommons.hpp"
+
+using namespace gimo;
 
 TEST_CASE(
     "TransformAlgorithm invokes its action with the contained value, when there is any."
@@ -100,4 +104,27 @@ TEST_CASE(
             CHECK(!result);
         }
     }
+}
+
+TEMPLATE_TEST_CASE(
+    "gimo::transform creates an appropriate pipeline.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
+{
+    using Cast = TestType;
+
+    mimicpp::Mock<float(int) const> inner{};
+    auto action = [&](int const v) { return inner(v); };
+    using DummyAction = decltype(action);
+
+    decltype(auto) pipeline = transform(Cast::cast(action));
+    STATIC_CHECK(std::same_as<Pipeline<detail::transform_t<DummyAction>>, decltype(pipeline)>);
+    STATIC_CHECK(gimo::applicable_on<std::optional<int>, detail::transform_t<DummyAction>>);
+
+    SCOPED_EXP inner.expect_call(1337)
+        and finally::returns(4.2f);
+    CHECK(std::optional{4.2f} == pipeline.apply(std::optional<int>{1337}));
 }

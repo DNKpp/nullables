@@ -104,7 +104,7 @@ namespace gimo
     [[nodiscard]]
     constexpr auto transform(Action&& action)
     {
-        using Algorithm = detail::transform_t<Action>;
+        using Algorithm = detail::transform_t<std::remove_cvref_t<Action>>;
 
         return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
     }
