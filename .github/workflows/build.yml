@@ -270,7 +270,7 @@ jobs:
                           -D GIMO_BUILD_TESTS=ON \
                           -D GIMO_BUILD_BENCHMARKS=OFF"
           
-          if [[ "${{ matrix.build_mode }}" == "Release" && ${{ matrix.cxx_standard }} -ge 23 ]]; then
+          if [[ "${{ matrix.build_mode }}" == "Release" ]]; then
             CMAKE_OPTIONS="${CMAKE_OPTIONS} -D GIMO_BUILD_BENCHMARKS=ON"
           fi
           
