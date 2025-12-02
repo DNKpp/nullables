@@ -47,7 +47,7 @@ namespace gimo
             detail::const_ref_like_t<Algorithm, typename std::remove_cvref_t<Algorithm>::action_type>>;
     };
 
-    template <typename Traits, typename Action>
+    template <unqualified Traits, unqualified Action>
     class BasicAlgorithm
     {
     public:

@@ -98,14 +98,14 @@ namespace gimo
     namespace detail
     {
         template <typename Action>
-        using and_then_t = BasicAlgorithm<and_then::traits, Action>;
+        using and_then_t = BasicAlgorithm<and_then::traits, std::remove_cvref_t<Action>>;
     }
 
     template <typename Action>
     [[nodiscard]]
     constexpr auto and_then(Action&& action)
     {
-        using Algorithm = detail::and_then_t<std::remove_cvref_t<Action>>;
+        using Algorithm = detail::and_then_t<Action>;
 
         return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
     }

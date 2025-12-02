@@ -97,14 +97,14 @@ namespace gimo
     namespace detail
     {
         template <typename Action>
-        using transform_t = BasicAlgorithm<transform::traits, Action>;
+        using transform_t = BasicAlgorithm<transform::traits, std::remove_cvref_t<Action>>;
     }
 
     template <typename Action>
     [[nodiscard]]
     constexpr auto transform(Action&& action)
     {
-        using Algorithm = detail::transform_t<std::remove_cvref_t<Action>>;
+        using Algorithm = detail::transform_t<Action>;
 
         return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
     }

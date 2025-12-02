@@ -92,14 +92,14 @@ namespace gimo
     namespace detail
     {
         template <typename Action>
-        using or_else_t = BasicAlgorithm<or_else::traits, Action>;
+        using or_else_t = BasicAlgorithm<or_else::traits, std::remove_cvref_t<Action>>;
     }
 
     template <typename Action>
     [[nodiscard]]
     constexpr auto or_else(Action&& action)
     {
-        using Algorithm = detail::or_else_t<std::remove_cvref_t<Action>>;
+        using Algorithm = detail::or_else_t<Action>;
 
         return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
     }

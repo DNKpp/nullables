@@ -116,7 +116,7 @@ TEMPLATE_TEST_CASE(
 {
     using Cast = TestType;
 
-    mimicpp::Mock<std::optional<int>() const> inner{};
+    mimicpp::Mock<std::optional<int>() const> const inner{};
     auto action = [&] { return inner(); };
     using DummyAction = decltype(action);
 
