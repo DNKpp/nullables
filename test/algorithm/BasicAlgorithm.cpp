@@ -9,6 +9,8 @@
 #include "gimo/algorithm/BasicAlgorithm.hpp"
 #include "gimo_ext/std_optional.hpp"
 
+#include "TestCommons.hpp"
+
 using namespace gimo;
 
 namespace
@@ -123,59 +125,6 @@ namespace
 
     template <typename Action>
     using TestAlgorithm = BasicAlgorithm<TestAlgorithmTraits, Action>;
-
-    struct as_lvalue_ref
-    {
-        template <typename T>
-        using type = std::remove_cvref_t<T>&;
-
-        template <typename T>
-        [[nodiscard]]
-        static constexpr type<T> cast(T& obj) noexcept
-        {
-            return static_cast<type<T>>(obj);
-        }
-    };
-
-    struct as_const_lvalue_ref
-    {
-        template <typename T>
-        using type = std::remove_cvref_t<T> const&;
-
-        template <typename T>
-        [[nodiscard]]
-        static constexpr type<T> cast(T& obj) noexcept
-        {
-            return static_cast<type<T>>(obj);
-        }
-    };
-
-    struct as_rvalue_ref
-    {
-        template <typename T>
-        using type = std::remove_cvref_t<T>&&;
-
-        template <typename T>
-        [[nodiscard]]
-        static constexpr type<T> cast(T&& obj) noexcept
-        {
-            return static_cast<type<T>>(obj);
-        }
-    };
-
-    struct as_const_rvalue_ref
-    {
-        template <typename T>
-        using type = std::remove_cvref_t<T> const&&;
-
-        template <typename T>
-        [[nodiscard]]
-        static constexpr type<T> cast(T&& obj) noexcept
-        {
-            return static_cast<type<T>>(obj);
-        }
-    };
-
 }
 
 template <typename T>
@@ -189,10 +138,10 @@ static_assert(gimo::nullable<NullableMock<int>>);
 TEMPLATE_TEST_CASE(
     "BasicAlgorithm::operator() propagates the nullable as-is.",
     "[algorithm]",
-    as_lvalue_ref,
-    as_const_lvalue_ref,
-    as_rvalue_ref,
-    as_const_rvalue_ref)
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
 {
     using matches::_;
 
@@ -292,10 +241,10 @@ TEMPLATE_TEST_CASE(
 TEMPLATE_TEST_CASE(
     "BasicAlgorithm::on_value propagates the nullable as-is to Traits::on_value.",
     "[algorithm]",
-    as_lvalue_ref,
-    as_const_lvalue_ref,
-    as_rvalue_ref,
-    as_const_rvalue_ref)
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
 {
     using matches::_;
 
