@@ -1,10 +1,14 @@
-//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          https://www.boost.org/LICENSE_1_0.txt)
+//           Copyright Dominic (DNKpp) Koepke 2025.
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
 
 #include "gimo/algorithm/AndThen.hpp"
 #include "gimo_ext/std_optional.hpp"
+
+#include "TestCommons.hpp"
+
+using namespace gimo;
 
 namespace
 {
@@ -197,4 +201,27 @@ TEST_CASE(
         STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
         CHECK(42 == result);
     }
+}
+
+TEMPLATE_TEST_CASE(
+    "gimo::and_then creates an appropriate pipeline.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
+{
+    using Cast = TestType;
+
+    mimicpp::Mock<std::optional<float>(int) const> inner{};
+    auto action = [&](int const v) { return inner(v); };
+    using DummyAction = decltype(action);
+
+    decltype(auto) pipeline = and_then(Cast::cast(action));
+    STATIC_CHECK(std::same_as<Pipeline<detail::and_then_t<DummyAction>>, decltype(pipeline)>);
+    STATIC_CHECK(gimo::applicable_on<std::optional<int>, detail::and_then_t<DummyAction>>);
+
+    SCOPED_EXP inner.expect_call(1337)
+        and finally::returns(4.2f);
+    CHECK(4.2f == pipeline.apply(std::optional<int>{1337}));
 }

@@ -105,7 +105,7 @@ namespace gimo
     [[nodiscard]]
     constexpr auto and_then(Action&& action)
     {
-        using Algorithm = detail::and_then_t<Action>;
+        using Algorithm = detail::and_then_t<std::remove_cvref_t<Action>>;
 
         return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
     }
