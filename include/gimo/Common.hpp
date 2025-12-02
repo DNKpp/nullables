@@ -98,6 +98,9 @@ namespace gimo
                     && detail::weakly_assignable_from<Nullable&, Null const&>;
 
     template <typename T>
+    concept unqualified = std::same_as<T, std::remove_cvref_t<T>>;
+
+    template <typename T>
     concept dereferencable = requires(T closure) {
         { *std::forward<T>(closure) } -> detail::referencable;
     };
