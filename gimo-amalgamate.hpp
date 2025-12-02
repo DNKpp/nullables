@@ -147,6 +147,9 @@ namespace gimo
                     && detail::weakly_assignable_from<Nullable&, Null const&>;
 
     template <typename T>
+    concept unqualified = std::same_as<T, std::remove_cvref_t<T>>;
+
+    template <typename T>
     concept dereferencable = requires(T closure) {
         { *std::forward<T>(closure) } -> detail::referencable;
     };
@@ -397,7 +400,7 @@ namespace gimo
             detail::const_ref_like_t<Algorithm, typename std::remove_cvref_t<Algorithm>::action_type>>;
     };
 
-    template <typename Traits, typename Action>
+    template <unqualified Traits, unqualified Action>
     class BasicAlgorithm
     {
     public:
@@ -642,7 +645,7 @@ namespace gimo
     namespace detail
     {
         template <typename Action>
-        using and_then_t = BasicAlgorithm<and_then::traits, Action>;
+        using and_then_t = BasicAlgorithm<and_then::traits, std::remove_cvref_t<Action>>;
     }
 
     template <typename Action>
@@ -751,7 +754,7 @@ namespace gimo
     namespace detail
     {
         template <typename Action>
-        using or_else_t = BasicAlgorithm<or_else::traits, Action>;
+        using or_else_t = BasicAlgorithm<or_else::traits, std::remove_cvref_t<Action>>;
     }
 
     template <typename Action>
@@ -865,7 +868,7 @@ namespace gimo
     namespace detail
     {
         template <typename Action>
-        using transform_t = BasicAlgorithm<transform::traits, Action>;
+        using transform_t = BasicAlgorithm<transform::traits, std::remove_cvref_t<Action>>;
     }
 
     template <typename Action>
