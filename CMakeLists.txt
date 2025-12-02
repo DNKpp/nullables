@@ -35,13 +35,15 @@ target_compile_features(gimo INTERFACE
 
 string(COMPARE EQUAL "${gimo_SOURCE_DIR}" "${CMAKE_SOURCE_DIR}" IS_TOP_LEVEL_PROJECT)
 
+include(Gimo-HasStdOptionalMonadic)
+
 option(GIMO_BUILD_TESTS "Determines, whether the tests shall be built." ${IS_TOP_LEVEL_PROJECT})
 if (GIMO_BUILD_TESTS)
 	add_subdirectory("test")
 endif()
 
 option(GIMO_BUILD_BENCHMARKS "Determines, whether the benchmarks shall be built." ${IS_TOP_LEVEL_PROJECT})
-if (GIMO_BUILD_BENCHMARKS)
+if (GIMO_BUILD_BENCHMARKS AND GIMO_HAS_STD_OPTIONAL_MONADIC)
 	add_subdirectory("benchmarks")
 endif()
 
