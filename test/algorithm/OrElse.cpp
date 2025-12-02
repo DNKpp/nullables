@@ -1,10 +1,14 @@
-//          Copyright Dominic (DNKpp) Koepke 2025 - 2025.
-// Distributed under the Boost Software License, Version 1.0.
-//    (See accompanying file LICENSE_1_0.txt or copy at
-//          https://www.boost.org/LICENSE_1_0.txt)
+//           Copyright Dominic (DNKpp) Koepke 2025.
+//  Distributed under the Boost Software License, Version 1.0.
+//     (See accompanying file LICENSE_1_0.txt or copy at
+//           https://www.boost.org/LICENSE_1_0.txt)
 
 #include "gimo/algorithm/OrElse.hpp"
 #include "gimo_ext/std_optional.hpp"
+
+#include "TestCommons.hpp"
+
+using namespace gimo;
 
 TEST_CASE(
     "OrElseAlgorithm invokes its action only when the input has no value."
@@ -17,7 +21,7 @@ TEST_CASE(
         std::optional<int>() const&&>
         action{};
 
-    using Algorithm = gimo::detail::or_else_t<decltype(action)>;
+    using Algorithm = detail::or_else_t<decltype(action)>;
     STATIC_REQUIRE(gimo::applicable_on<std::optional<int>, Algorithm&>);
     STATIC_REQUIRE(gimo::applicable_on<std::optional<int>, Algorithm const&>);
     STATIC_REQUIRE(gimo::applicable_on<std::optional<int>, Algorithm&&>);
@@ -100,4 +104,27 @@ TEST_CASE(
             CHECK(result);
         }
     }
+}
+
+TEMPLATE_TEST_CASE(
+    "gimo::or_else creates an appropriate pipeline.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
+{
+    using Cast = TestType;
+
+    mimicpp::Mock<std::optional<int>() const> inner{};
+    auto action = [&] { return inner(); };
+    using DummyAction = decltype(action);
+
+    decltype(auto) pipeline = or_else(Cast::cast(action));
+    STATIC_CHECK(std::same_as<Pipeline<detail::or_else_t<DummyAction>>, decltype(pipeline)>);
+    STATIC_CHECK(gimo::applicable_on<std::optional<int>, detail::or_else_t<DummyAction>>);
+
+    SCOPED_EXP inner.expect_call()
+        and finally::returns(1337);
+    CHECK(1337 == pipeline.apply(std::optional<int>{}));
 }

@@ -99,7 +99,7 @@ namespace gimo
     [[nodiscard]]
     constexpr auto or_else(Action&& action)
     {
-        using Algorithm = detail::or_else_t<Action>;
+        using Algorithm = detail::or_else_t<std::remove_cvref_t<Action>>;
 
         return Pipeline{std::tuple<Algorithm>{std::forward<Action>(action)}};
     }
