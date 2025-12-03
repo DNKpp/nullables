@@ -10,10 +10,16 @@
 
 using namespace gimo;
 
-TEST_CASE(
-    "TransformAlgorithm invokes its action with the contained value, when there is any."
-    "[algorithm]")
+TEMPLATE_TEST_CASE(
+    "transform algorithm invokes its action with the contained value, when there is any.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
 {
+    using with_qualification = TestType;
+
     mimicpp::Mock<
         int(float)&,
         int(float) const&,
@@ -21,54 +27,20 @@ TEST_CASE(
         int(float) const&&>
         action{};
 
-    using Algorithm = gimo::detail::transform_t<decltype(action)>;
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&&>);
+    using Algorithm = detail::transform_t<decltype(action)>;
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename with_qualification::template type<Algorithm>>);
 
     SECTION("When input has a value, the action is invoked.")
     {
+        SCOPED_EXP with_qualification::cast(action).expect_call(1337.f)
+            and finally::returns(42);
+
         constexpr std::optional opt{1337.f};
-        SECTION("When algorithm is used via lvalue-ref overload.")
-        {
-            SCOPED_EXP action.expect_call(1337.f)
-                and finally::returns(42);
-            Algorithm transform{std::move(action)};
-            decltype(auto) result = transform(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
+        Algorithm transform{std::move(action)};
 
-        SECTION("When algorithm is used via const lvalue-ref overload.")
-        {
-            SCOPED_EXP std::as_const(action).expect_call(1337.f)
-                and finally::returns(42);
-            Algorithm transform{std::move(action)};
-            decltype(auto) result = std::as_const(transform)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
-
-        SECTION("When algorithm is used via rvalue-ref overload.")
-        {
-            SCOPED_EXP std::move(action).expect_call(1337.f)
-                and finally::returns(42);
-            Algorithm transform{std::move(action)};
-            decltype(auto) result = std::move(transform)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
-
-        SECTION("When algorithm is used via const rvalue-ref overload.")
-        {
-            SCOPED_EXP std::move(std::as_const(action)).expect_call(1337.f)
-                and finally::returns(42);
-            Algorithm transform{std::move(action)};
-            decltype(auto) result = std::move(std::as_const(transform))(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
+        decltype(auto) result = with_qualification::cast(transform)(opt);
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(42 == result);
     }
 
     SECTION("When input is empty, action is not invoked.")
@@ -76,34 +48,40 @@ TEST_CASE(
         Algorithm transform{std::move(action)};
         constexpr std::optional<float> opt{};
 
-        SECTION("When algorithm is used via lvalue-ref overload.")
-        {
-            decltype(auto) result = transform(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
-
-        SECTION("When algorithm is used via const lvalue-ref overload.")
-        {
-            decltype(auto) result = std::as_const(transform)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
-
-        SECTION("When algorithm is used via rvalue-ref overload.")
-        {
-            decltype(auto) result = std::move(transform)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
-
-        SECTION("When algorithm is used via const rvalue-ref overload.")
-        {
-            decltype(auto) result = std::move(std::as_const(transform))(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
+        decltype(auto) result = with_qualification::cast(transform)(opt);
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(!result);
     }
+}
+
+TEMPLATE_TEST_CASE(
+    "transform algorithm accepts nullables with any cv-ref qualification.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
+{
+    using with_qualification = TestType;
+
+    mimicpp::Mock<
+        int(float&) const,
+        int(float const&) const,
+        int(float&&) const,
+        int(float const&&) const> const action{};
+    using Algorithm = detail::transform_t<decltype(std::cref(action))>;
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename with_qualification::template type<Algorithm>>);
+
+    Algorithm const andThen{std::cref(action)};
+    std::optional opt{1337.f};
+
+    using ExpectedRef = with_qualification::template type<float>;
+    SCOPED_EXP action.expect_call(matches::type<ExpectedRef>)
+        and expect::arg<0>(matches::eq(1337.f))
+        and finally::returns(42);
+    decltype(auto) result = andThen(with_qualification::cast(opt));
+    STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+    CHECK(42 == result);
 }
 
 TEMPLATE_TEST_CASE(
@@ -114,13 +92,13 @@ TEMPLATE_TEST_CASE(
     testing::as_rvalue_ref,
     testing::as_const_rvalue_ref)
 {
-    using Cast = TestType;
+    using with_qualification = TestType;
 
     mimicpp::Mock<float(int) const> const inner{};
     auto action = [&](int const v) { return inner(v); };
     using DummyAction = decltype(action);
 
-    decltype(auto) pipeline = transform(Cast::cast(action));
+    decltype(auto) pipeline = transform(with_qualification::cast(action));
     STATIC_CHECK(std::same_as<Pipeline<detail::transform_t<DummyAction>>, decltype(pipeline)>);
     STATIC_CHECK(gimo::applicable_on<std::optional<int>, detail::transform_t<DummyAction>>);
 
