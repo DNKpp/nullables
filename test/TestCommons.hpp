@@ -60,4 +60,10 @@ namespace gimo::testing
             return static_cast<type<T>>(obj);
         }
     };
+
+    using with_qualification_list = std::tuple<
+        as_lvalue_ref,
+        as_const_lvalue_ref,
+        as_rvalue_ref,
+        as_const_rvalue_ref>;
 }

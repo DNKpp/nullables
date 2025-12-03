@@ -10,13 +10,10 @@
 
 using namespace gimo;
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "transform algorithm invokes its action with the contained value, when there is any.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
     using with_qualification = TestType;
 
@@ -54,13 +51,10 @@ TEMPLATE_TEST_CASE(
     }
 }
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "transform algorithm accepts nullables with any cv-ref qualification.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
     using with_qualification = TestType;
 
@@ -84,13 +78,10 @@ TEMPLATE_TEST_CASE(
     CHECK(42 == result);
 }
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "gimo::transform creates an appropriate pipeline.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
     using with_qualification = TestType;
 

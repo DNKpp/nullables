@@ -47,15 +47,12 @@ struct value_or_algorithm
 };*/
 }
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "and_then algorithm invokes its action only when the input has a value.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
-    using Cast = TestType;
+    using with_qualification = TestType;
 
     mimicpp::Mock<
         std::optional<int>(float)&,
@@ -65,17 +62,17 @@ TEMPLATE_TEST_CASE(
         action{};
 
     using Algorithm = detail::and_then_t<decltype(action)>;
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename Cast::template type<Algorithm>>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename with_qualification::template type<Algorithm>>);
 
     SECTION("When input has a value, the action is invoked.")
     {
         constexpr std::optional opt{1337.f};
 
-        SCOPED_EXP Cast::cast(action).expect_call(1337.f)
+        SCOPED_EXP with_qualification::cast(action).expect_call(1337.f)
             and finally::returns(std::optional{42});
 
         Algorithm andThen{std::move(action)};
-        decltype(auto) result = Cast::cast(andThen)(opt);
+        decltype(auto) result = with_qualification::cast(andThen)(opt);
         STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
         CHECK(42 == result);
     }
@@ -85,21 +82,18 @@ TEMPLATE_TEST_CASE(
         constexpr std::optional<float> opt{};
         Algorithm andThen{std::move(action)};
 
-        decltype(auto) result = Cast::cast(andThen)(opt);
+        decltype(auto) result = with_qualification::cast(andThen)(opt);
         STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
         CHECK(!result);
     }
 }
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "and_then algorithm accepts nullables with any cv-ref qualification.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
-    using Cast = TestType;
+    using with_qualification = TestType;
 
     mimicpp::Mock<
         std::optional<int>(float&) const,
@@ -108,35 +102,32 @@ TEMPLATE_TEST_CASE(
         std::optional<int>(float const&&) const>
         action{};
     using Algorithm = detail::and_then_t<decltype(std::cref(action))>;
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename Cast::template type<Algorithm>>);
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename with_qualification::template type<Algorithm>>);
 
     Algorithm const andThen{std::cref(action)};
     std::optional opt{1337.f};
 
-    using ExpectedRef = Cast::template type<float>;
+    using ExpectedRef = with_qualification::template type<float>;
     SCOPED_EXP action.expect_call(matches::type<ExpectedRef>)
         and expect::arg<0>(matches::eq(1337.f))
         and finally::returns(std::optional{42});
-    decltype(auto) result = andThen(Cast::cast(opt));
+    decltype(auto) result = andThen(with_qualification::cast(opt));
     STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
     CHECK(42 == result);
 }
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "gimo::and_then creates an appropriate pipeline.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
-    using Cast = TestType;
+    using with_qualification = TestType;
 
     mimicpp::Mock<std::optional<float>(int) const> const inner{};
     auto action = [&](int const v) { return inner(v); };
     using DummyAction = decltype(action);
 
-    decltype(auto) pipeline = and_then(Cast::cast(action));
+    decltype(auto) pipeline = and_then(with_qualification::cast(action));
     STATIC_CHECK(std::same_as<Pipeline<detail::and_then_t<DummyAction>>, decltype(pipeline)>);
     STATIC_CHECK(gimo::applicable_on<std::optional<int>, detail::and_then_t<DummyAction>>);
 

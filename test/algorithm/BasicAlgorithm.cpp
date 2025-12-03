@@ -135,13 +135,10 @@ struct gimo::traits<NullableMock<T>>
 
 static_assert(gimo::nullable<NullableMock<int>>);
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "BasicAlgorithm::operator() propagates the nullable as-is.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
     using matches::_;
 
@@ -238,13 +235,10 @@ TEMPLATE_TEST_CASE(
     }
 }
 
-TEMPLATE_TEST_CASE(
+TEMPLATE_LIST_TEST_CASE(
     "BasicAlgorithm::on_value propagates the nullable as-is to Traits::on_value.",
     "[algorithm]",
-    testing::as_lvalue_ref,
-    testing::as_const_lvalue_ref,
-    testing::as_rvalue_ref,
-    testing::as_const_rvalue_ref)
+    testing::with_qualification_list)
 {
     using matches::_;
 
