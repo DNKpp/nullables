@@ -92,7 +92,7 @@ TEMPLATE_TEST_CASE(
 }
 
 TEMPLATE_TEST_CASE(
-    "and_then algorithm receives the nullable forwarded.",
+    "and_then algorithm accepts nullables with any cv-ref qualification.",
     "[algorithm]",
     testing::as_lvalue_ref,
     testing::as_const_lvalue_ref,

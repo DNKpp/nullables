@@ -55,6 +55,31 @@ TEMPLATE_TEST_CASE(
 }
 
 TEMPLATE_TEST_CASE(
+    "or_else algorithm accepts nullables with any cv-ref qualification.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
+{
+    using Cast = TestType;
+
+    mimicpp::Mock<std::optional<int>() const> const action{};
+
+    using Algorithm = detail::or_else_t<decltype(std::cref(action))>;
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<int>, typename Cast::template type<Algorithm>>);
+
+    Algorithm const orElse{std::cref(action)};
+    std::optional<int> opt{};
+
+    SCOPED_EXP action.expect_call()
+        and finally::returns(std::optional{42});
+    decltype(auto) result = orElse(Cast::cast(opt));
+    STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+    CHECK(42 == result);
+}
+
+TEMPLATE_TEST_CASE(
     "gimo::or_else creates an appropriate pipeline.",
     "[algorithm]",
     testing::as_lvalue_ref,
