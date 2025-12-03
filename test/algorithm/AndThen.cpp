@@ -47,10 +47,16 @@ struct value_or_algorithm
 };*/
 }
 
-TEST_CASE(
-    "AndThenAlgorithm invokes its action only when the input has a value."
-    "[algorithm]")
+TEMPLATE_TEST_CASE(
+    "and_then algorithm invokes its action only when the input has a value.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
 {
+    using Cast = TestType;
+
     mimicpp::Mock<
         std::optional<int>(float)&,
         std::optional<int>(float) const&,
@@ -58,149 +64,62 @@ TEST_CASE(
         std::optional<int>(float) const&&>
         action{};
 
-    using Algorithm = gimo::detail::and_then_t<decltype(action)>;
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&&>);
+    using Algorithm = detail::and_then_t<decltype(action)>;
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename Cast::template type<Algorithm>>);
 
     SECTION("When input has a value, the action is invoked.")
     {
         constexpr std::optional opt{1337.f};
-        SECTION("When algorithm is used via lvalue-ref overload.")
-        {
-            SCOPED_EXP action.expect_call(1337.f)
-                and finally::returns(std::optional{42});
-            Algorithm andThen{std::move(action)};
-            decltype(auto) result = andThen(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
 
-        SECTION("When algorithm is used via const lvalue-ref overload.")
-        {
-            SCOPED_EXP std::as_const(action).expect_call(1337.f)
-                and finally::returns(std::optional{42});
-            Algorithm andThen{std::move(action)};
-            decltype(auto) result = std::as_const(andThen)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
+        SCOPED_EXP Cast::cast(action).expect_call(1337.f)
+            and finally::returns(std::optional{42});
 
-        SECTION("When algorithm is used via rvalue-ref overload.")
-        {
-            SCOPED_EXP std::move(action).expect_call(1337.f)
-                and finally::returns(std::optional{42});
-            Algorithm andThen{std::move(action)};
-            decltype(auto) result = std::move(andThen)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
-
-        SECTION("When algorithm is used via const rvalue-ref overload.")
-        {
-            SCOPED_EXP std::move(std::as_const(action)).expect_call(1337.f)
-                and finally::returns(std::optional{42});
-            Algorithm andThen{std::move(action)};
-            decltype(auto) result = std::move(std::as_const(andThen))(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(42 == result);
-        }
+        Algorithm andThen{std::move(action)};
+        decltype(auto) result = Cast::cast(andThen)(opt);
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(42 == result);
     }
 
     SECTION("When input is empty, action is not invoked.")
     {
-        Algorithm andThen{std::move(action)};
         constexpr std::optional<float> opt{};
+        Algorithm andThen{std::move(action)};
 
-        SECTION("When algorithm is used via lvalue-ref overload.")
-        {
-            decltype(auto) result = andThen(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
-
-        SECTION("When algorithm is used via const lvalue-ref overload.")
-        {
-            decltype(auto) result = std::as_const(andThen)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
-
-        SECTION("When algorithm is used via rvalue-ref overload.")
-        {
-            decltype(auto) result = std::move(andThen)(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
-
-        SECTION("When algorithm is used via const rvalue-ref overload.")
-        {
-            decltype(auto) result = std::move(std::as_const(andThen))(opt);
-            STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-            CHECK(!result);
-        }
+        decltype(auto) result = Cast::cast(andThen)(opt);
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(!result);
     }
 }
 
-TEST_CASE(
-    "AndThenAlgorithm receives the nullable forwarded.",
-    "[algorithm]")
+TEMPLATE_TEST_CASE(
+    "and_then algorithm receives the nullable forwarded.",
+    "[algorithm]",
+    testing::as_lvalue_ref,
+    testing::as_const_lvalue_ref,
+    testing::as_rvalue_ref,
+    testing::as_const_rvalue_ref)
 {
+    using Cast = TestType;
+
     mimicpp::Mock<
         std::optional<int>(float&) const,
         std::optional<int>(float const&) const,
         std::optional<int>(float&&) const,
         std::optional<int>(float const&&) const>
         action{};
-    using Algorithm = gimo::detail::and_then_t<decltype(std::cref(action))>;
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm&&>);
-    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, Algorithm const&&>);
+    using Algorithm = detail::and_then_t<decltype(std::cref(action))>;
+    STATIC_REQUIRE(gimo::applicable_on<std::optional<float>, typename Cast::template type<Algorithm>>);
 
     Algorithm const andThen{std::cref(action)};
-
     std::optional opt{1337.f};
-    SECTION("When argument is provided as lvalue-ref.")
-    {
-        SCOPED_EXP action.expect_call(matches::type<float&>)
-            and expect::arg<0>(matches::eq(1337.f))
-            and finally::returns(std::optional{42});
-        decltype(auto) result = andThen(opt);
-        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-        CHECK(42 == result);
-    }
 
-    SECTION("When argument is provided as const lvalue-ref.")
-    {
-        SCOPED_EXP action.expect_call(matches::type<float const&>)
-            and expect::arg<0>(matches::eq(1337.f))
-            and finally::returns(std::optional{42});
-        decltype(auto) result = andThen(std::as_const(opt));
-        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-        CHECK(42 == result);
-    }
-
-    SECTION("When argument is provided as rvalue-ref.")
-    {
-        SCOPED_EXP action.expect_call(matches::type<float&&>)
-            and expect::arg<0>(matches::eq(1337.f))
-            and finally::returns(std::optional{42});
-        decltype(auto) result = andThen(std::move(opt));
-        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-        CHECK(42 == result);
-    }
-
-    SECTION("When argument is provided as const rvalue-ref.")
-    {
-        SCOPED_EXP action.expect_call(matches::type<float const&&>)
-            and expect::arg<0>(matches::eq(1337.f))
-            and finally::returns(std::optional{42});
-        decltype(auto) result = andThen(std::move(std::as_const(opt)));
-        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
-        CHECK(42 == result);
-    }
+    using ExpectedRef = Cast::template type<float>;
+    SCOPED_EXP action.expect_call(matches::type<ExpectedRef>)
+        and expect::arg<0>(matches::eq(1337.f))
+        and finally::returns(std::optional{42});
+    decltype(auto) result = andThen(Cast::cast(opt));
+    STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+    CHECK(42 == result);
 }
 
 TEMPLATE_TEST_CASE(
