@@ -67,4 +67,45 @@ namespace gimo::testing
         as_const_lvalue_ref,
         as_rvalue_ref,
         as_const_rvalue_ref>;
+
+    struct AlgorithmMockTraits
+    {
+        template <nullable Nullable>
+        using output = std::optional<std::remove_cvref_t<reference_type_t<Nullable>>>;
+
+        template <nullable Nullable, typename Action>
+        static constexpr bool is_applicable_on = true;
+
+        template <typename Action, nullable Nullable, typename... Steps>
+        inline static mimicpp::Mock<std::remove_cvref_t<output<Nullable>>(Action, Nullable, Steps...) const> on_value_{
+            {"AlgorithmMock::on_value", 1u}
+        };
+
+        template <typename Action, nullable Nullable, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_value(Action&& action, Nullable&& opt, Steps&&... steps)
+        {
+            return on_value_<Action&&, Nullable&&, Steps&&...>(
+                std::forward<Action>(action),
+                std::forward<Nullable>(opt),
+                std::forward<Steps>(steps)...);
+        }
+
+        template <nullable Nullable, typename Action, typename... Steps>
+        inline static mimicpp::Mock<Nullable(Action, Steps...) const> on_null_{
+            {"AlgorithmMock::on_null", 1u}
+        };
+
+        template <nullable Nullable, typename Action, typename... Steps>
+        [[nodiscard]]
+        static constexpr auto on_null(Action&& action, Steps&&... steps)
+        {
+            return on_null_<output<Nullable>, Action&&, Steps&&...>(
+                std::forward<Action>(action),
+                std::forward<Steps>(steps)...);
+        }
+    };
+
+    template <typename Action>
+    using AlgorithmMock = BasicAlgorithm<AlgorithmMockTraits, Action>;
 }

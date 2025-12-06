@@ -15,44 +15,6 @@ using namespace gimo;
 
 namespace
 {
-    struct TestAlgorithmTraits
-    {
-        template <nullable Nullable>
-        using output = std::optional<std::remove_cvref_t<reference_type_t<Nullable>>>;
-
-        template <nullable Nullable, typename Action>
-        static constexpr bool is_applicable_on = true;
-
-        template <typename Action, nullable Nullable, typename... Steps>
-        inline static mimicpp::Mock<std::remove_cvref_t<output<Nullable>>(Action, Nullable, Steps...)> on_value_{
-            {"TestAlgorithmTraits::on_value", 1u}
-        };
-
-        template <typename Action, nullable Nullable, typename... Steps>
-        [[nodiscard]]
-        static constexpr auto on_value(Action&& action, Nullable&& opt, Steps&&... steps)
-        {
-            return on_value_<Action&&, Nullable&&, Steps&&...>(
-                std::forward<Action>(action),
-                std::forward<Nullable>(opt),
-                std::forward<Steps>(steps)...);
-        }
-
-        template <nullable Nullable, typename Action, typename... Steps>
-        inline static mimicpp::Mock<Nullable(Action, Steps...)> on_null_{
-            {"TestAlgorithmTraits::on_null", 1u}
-        };
-
-        template <nullable Nullable, typename Action, typename... Steps>
-        [[nodiscard]]
-        static constexpr auto on_null(Action&& action, Steps&&... steps)
-        {
-            return on_null_<output<Nullable>, Action&&, Steps&&...>(
-                std::forward<Action>(action),
-                std::forward<Steps>(steps)...);
-        }
-    };
-
     struct NullableNull
     {
     };
@@ -122,9 +84,6 @@ namespace
             return *this;
         }
     };
-
-    template <typename Action>
-    using TestAlgorithm = BasicAlgorithm<TestAlgorithmTraits, Action>;
 }
 
 template <typename T>
@@ -143,7 +102,7 @@ TEMPLATE_LIST_TEST_CASE(
     using matches::_;
 
     using ActionMock = mimicpp::Mock<void()>;
-    TestAlgorithm<ActionMock> algorithm{};
+    testing::AlgorithmMock<ActionMock> algorithm{};
     NullableMock<int> opt{};
     mimicpp::ScopedSequence sequence{};
 
@@ -157,7 +116,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as mutable lvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_value_<ActionMock&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+            sequence += testing::AlgorithmMockTraits::on_value_<ActionMock&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                     and finally::returns(1337);
 
             std::optional<int> const result = algorithm(Cast::cast(opt));
@@ -166,7 +125,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as const lvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_value_<ActionMock const&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+            sequence += testing::AlgorithmMockTraits::on_value_<ActionMock const&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                     and finally::returns(1337);
 
             std::optional<int> const result = std::as_const(algorithm)(Cast::cast(opt));
@@ -175,7 +134,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as mutable rvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_value_<ActionMock&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+            sequence += testing::AlgorithmMockTraits::on_value_<ActionMock&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                     and finally::returns(1337);
 
             std::optional<int> const result = std::move(algorithm)(Cast::cast(opt));
@@ -184,7 +143,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as const rvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_value_<ActionMock const&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+            sequence += testing::AlgorithmMockTraits::on_value_<ActionMock const&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                     and finally::returns(1337);
 
             std::optional<int> const result = std::move(std::as_const(algorithm))(Cast::cast(opt));
@@ -199,7 +158,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as mutable lvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock&>.expect_call(_)
+            sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock&>.expect_call(_)
                     and finally::returns(1337);
 
             std::optional<int> const result = algorithm(Cast::cast(opt));
@@ -208,7 +167,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as const lvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock const&>.expect_call(_)
+            sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock const&>.expect_call(_)
                     and finally::returns(1337);
 
             std::optional<int> const result = std::as_const(algorithm)(Cast::cast(opt));
@@ -217,7 +176,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as mutable rvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock&&>.expect_call(_)
+            sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock&&>.expect_call(_)
                     and finally::returns(1337);
 
             std::optional<int> const result = std::move(algorithm)(Cast::cast(opt));
@@ -226,7 +185,7 @@ TEMPLATE_LIST_TEST_CASE(
 
         SECTION("When algorithm is invoked as const rvalue-ref.")
         {
-            sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock const&&>.expect_call(_)
+            sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock const&&>.expect_call(_)
                     and finally::returns(1337);
 
             std::optional<int> const result = std::move(std::as_const(algorithm))(Cast::cast(opt));
@@ -243,7 +202,7 @@ TEMPLATE_LIST_TEST_CASE(
     using matches::_;
 
     using ActionMock = mimicpp::Mock<void()>;
-    TestAlgorithm<ActionMock> algorithm{};
+    testing::AlgorithmMock<ActionMock> algorithm{};
     NullableMock<int> opt{};
     mimicpp::ScopedSequence sequence{};
 
@@ -252,7 +211,7 @@ TEMPLATE_LIST_TEST_CASE(
 
     SECTION("When algorithm is invoked as mutable lvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_value_<ActionMock&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+        sequence += testing::AlgorithmMockTraits::on_value_<ActionMock&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                 and finally::returns(1337);
 
         std::optional<int> const result = algorithm.on_value(Cast::cast(opt));
@@ -261,7 +220,7 @@ TEMPLATE_LIST_TEST_CASE(
 
     SECTION("When algorithm is invoked as const lvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_value_<ActionMock const&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+        sequence += testing::AlgorithmMockTraits::on_value_<ActionMock const&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                 and finally::returns(1337);
 
         std::optional<int> const result = std::as_const(algorithm).on_value(Cast::cast(opt));
@@ -270,7 +229,7 @@ TEMPLATE_LIST_TEST_CASE(
 
     SECTION("When algorithm is invoked as mutable rvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_value_<ActionMock&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+        sequence += testing::AlgorithmMockTraits::on_value_<ActionMock&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                 and finally::returns(1337);
 
         std::optional<int> const result = std::move(algorithm).on_value(Cast::cast(opt));
@@ -279,7 +238,7 @@ TEMPLATE_LIST_TEST_CASE(
 
     SECTION("When algorithm is invoked as const rvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_value_<ActionMock const&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
+        sequence += testing::AlgorithmMockTraits::on_value_<ActionMock const&&, ExpectedOptRef>.expect_call(_, matches::instance(opt))
                 and finally::returns(1337);
 
         std::optional<int> const result = std::move(std::as_const(algorithm)).on_value(Cast::cast(opt));
@@ -294,12 +253,12 @@ TEST_CASE(
     using matches::_;
 
     using ActionMock = mimicpp::Mock<void()>;
-    TestAlgorithm<ActionMock> algorithm{};
+    testing::AlgorithmMock<ActionMock> algorithm{};
     mimicpp::ScopedSequence sequence{};
 
     SECTION("When algorithm is invoked as mutable lvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock&>.expect_call(_)
+        sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock&>.expect_call(_)
                 and finally::returns(1337);
 
         std::optional<int> const result = algorithm.on_null<NullableMock<int>>();
@@ -308,7 +267,7 @@ TEST_CASE(
 
     SECTION("When algorithm is invoked as const lvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock const&>.expect_call(_)
+        sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock const&>.expect_call(_)
                 and finally::returns(1337);
 
         std::optional<int> const result = std::as_const(algorithm).on_null<NullableMock<int>>();
@@ -317,7 +276,7 @@ TEST_CASE(
 
     SECTION("When algorithm is invoked as mutable rvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock&&>.expect_call(_)
+        sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock&&>.expect_call(_)
                 and finally::returns(1337);
 
         std::optional<int> const result = std::move(algorithm).on_null<NullableMock<int>>();
@@ -326,7 +285,7 @@ TEST_CASE(
 
     SECTION("When algorithm is invoked as const rvalue-ref.")
     {
-        sequence += TestAlgorithmTraits::on_null_<std::optional<int>, ActionMock const&&>.expect_call(_)
+        sequence += testing::AlgorithmMockTraits::on_null_<std::optional<int>, ActionMock const&&>.expect_call(_)
                 and finally::returns(1337);
 
         std::optional<int> const result = std::move(std::as_const(algorithm)).on_null<NullableMock<int>>();
