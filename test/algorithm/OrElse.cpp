@@ -74,6 +74,52 @@ TEMPLATE_LIST_TEST_CASE(
 }
 
 TEMPLATE_LIST_TEST_CASE(
+    "or_else algorithm forwards additional steps as-is.",
+    "[algorith]",
+    testing::with_qualification_list)
+{
+    using matches::_;
+    using with_qualification = TestType;
+
+    auto const step0 = detail::or_else_t<decltype([] { return std::optional{43}; })>{};
+    using StepMock = testing::AlgorithmMock<std::identity>;
+    using StepRef = with_qualification::template type<StepMock>;
+    using ActionRef = with_qualification::template type<std::identity>;
+    StepMock step1{};
+    StepMock step2{};
+
+    SECTION("When input has a value.")
+    {
+        auto& on_value = testing::AlgorithmMockTraits::on_value_<ActionRef, std::optional<int>&&, StepRef>;
+        SCOPED_EXP on_value.expect_call(_, 42, matches::instance(step2))
+            and finally::returns(1337);
+
+        decltype(auto) result = std::invoke(
+            step0,
+            std::optional{42},
+            with_qualification::cast(step1),
+            with_qualification::cast(step2));
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(1337 == result);
+    }
+
+    SECTION("When input is empty.")
+    {
+        auto& on_value = testing::AlgorithmMockTraits::on_value_<ActionRef, std::optional<int>&&, StepRef>;
+        SCOPED_EXP on_value.expect_call(_, 43, matches::instance(step2))
+            and finally::returns(1337);
+
+        decltype(auto) result = std::invoke(
+            step0,
+            std::optional<int>{},
+            with_qualification::cast(step1),
+            with_qualification::cast(step2));
+        STATIC_REQUIRE(std::same_as<std::optional<int>, decltype(result)>);
+        CHECK(1337 == result);
+    }
+}
+
+TEMPLATE_LIST_TEST_CASE(
     "gimo::or_else creates an appropriate pipeline.",
     "[algorithm]",
     testing::with_qualification_list)
